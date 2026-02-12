@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceType {
+  API_JSON
+  ICS_FEED
+  HTML_SCRAPE
+}
+
+model Source {
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  type          SourceType
+  url           String
+  config        Json?
+  enabled       Boolean    @default(true)
+  isBuiltIn     Boolean    @default(false)
+  lastScrapedAt DateTime?
+  lastError     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  events        Event[]
+}
+
+model Event {
+  id              String   @id @default(cuid())
+  sourceId        String
+  source          Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceEventId   String?
+  title           String
+  description     String?
+  descriptionHtml String?
+  startTime       DateTime
+  endTime         DateTime?
+  isAllDay        Boolean  @default(false)
+  timezone        String   @default("America/Los_Angeles")
+  location        String?
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  url             String?
+  ticketUrl       String?
+  imageUrl        String?
+  cost            String?
+  isCanceled      Boolean  @default(false)
+  isOnline        Boolean  @default(false)
+  eventType       String?
+  audience        String?
+  subjects        String[]
+  department      String?
+  rawData         Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([sourceId, sourceEventId])
+  @@index([startTime])
+  @@index([sourceId])
+  @@index([eventType])
+  @@index([location])
+}

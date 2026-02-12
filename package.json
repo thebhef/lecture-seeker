@@ -1,0 +1,28 @@
+{
+  "name": "lecture-seeker",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w apps/web\" \"npm run dev -w apps/worker\"",
+    "build": "npm run build -w packages/shared && npm run build -w apps/web && npm run build -w apps/worker",
+    "db:generate": "prisma generate --schema packages/shared/src/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema packages/shared/src/prisma/schema.prisma",
+    "db:push": "prisma db push --schema packages/shared/src/prisma/schema.prisma",
+    "db:seed": "tsx packages/shared/src/prisma/seed.ts",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "concurrently": "^9.1.0",
+    "prisma": "^6.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  }
+}

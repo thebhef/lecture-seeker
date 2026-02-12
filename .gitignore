@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.next/
+.env
+*.tsbuildinfo
+.prisma/
+
+# Claude Code
+.claude/*.local.*
