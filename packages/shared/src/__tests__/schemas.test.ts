@@ -68,6 +68,47 @@ describe("eventQuerySchema", () => {
     expect(result.timeOfDay).toBeUndefined();
     expect(result.isOnline).toBeUndefined();
   });
+
+  it("parses startBefore as a date", () => {
+    const result = eventQuerySchema.parse({ startBefore: "2026-12-31T23:59:59Z" });
+    expect(result.startBefore).toBeInstanceOf(Date);
+    expect(result.startBefore!.getFullYear()).toBe(2026);
+  });
+
+  it("accepts limit at boundary value of 1", () => {
+    const result = eventQuerySchema.parse({ limit: "1" });
+    expect(result.limit).toBe(1);
+  });
+
+  it("accepts limit at boundary value of 200", () => {
+    const result = eventQuerySchema.parse({ limit: "200" });
+    expect(result.limit).toBe(200);
+  });
+
+  it("rejects limit of 0", () => {
+    const result = eventQuerySchema.safeParse({ limit: "0" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects page of 0", () => {
+    const result = eventQuerySchema.safeParse({ page: "0" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-numeric page values", () => {
+    const result = eventQuerySchema.safeParse({ page: "abc" });
+    expect(result.success).toBe(false);
+  });
+
+  it("supports both startAfter and startBefore together", () => {
+    const result = eventQuerySchema.parse({
+      startAfter: "2026-01-01T00:00:00Z",
+      startBefore: "2026-12-31T23:59:59Z",
+    });
+    expect(result.startAfter).toBeInstanceOf(Date);
+    expect(result.startBefore).toBeInstanceOf(Date);
+    expect(result.startAfter!.getTime()).toBeLessThan(result.startBefore!.getTime());
+  });
 });
 
 describe("createSourceSchema", () => {

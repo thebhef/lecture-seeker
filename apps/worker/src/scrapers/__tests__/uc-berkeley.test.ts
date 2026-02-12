@@ -160,4 +160,93 @@ describe("UCBerkeleyScraper", () => {
     expect(result.events).toHaveLength(1);
     expect(result.events[0].startTime).toBeInstanceOf(Date);
   });
+
+  it("handles API errors gracefully", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({ ok: false, status: 500 })
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain("500");
+  });
+
+  it("handles network failures gracefully", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValueOnce(new Error("Network error"))
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("uses date2_iso as end time fallback when date2_utc is missing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ date2_utc: undefined, date2_iso: "2026-04-10T21:00:00-07:00" }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].endTime).toBeInstanceOf(Date);
+  });
+
+  it("leaves endTime undefined when both date2_utc and date2_iso are missing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ date2_utc: undefined, date2_iso: undefined }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].endTime).toBeUndefined();
+  });
+
+  it("falls back to description when summary is empty", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ summary: "", description: "Detailed description here" }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].description).toBe("Detailed description here");
+  });
+
+  it("leaves description undefined when both summary and description are missing", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ summary: undefined, description: undefined }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].description).toBeUndefined();
+  });
+
+  it("uses event timezone when provided", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ timezone: "America/New_York" }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].timezone).toBe("America/New_York");
+  });
+
+  it("defaults timezone to America/Los_Angeles when not provided", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ timezone: undefined }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].timezone).toBe("America/Los_Angeles");
+  });
 });

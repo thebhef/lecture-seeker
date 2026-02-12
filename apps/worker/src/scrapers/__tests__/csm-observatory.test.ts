@@ -141,4 +141,81 @@ describe("CSMObservatoryScraper", () => {
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
   });
+
+  it("handles network failures gracefully", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValueOnce(new Error("ECONNREFUSED"))
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("skips rows with malformed date text", async () => {
+    const htmlWithBadDate = `
+    <html><body>
+      <table>
+        <tr><th>Date</th><th>Time</th></tr>
+        <tr><td>Not A Date</td><td>7:00-9:00PM</td></tr>
+        <tr><td>Jan 24</td><td>7:00-9:00PM</td></tr>
+      </table>
+    </body></html>`;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(htmlWithBadDate),
+      })
+    );
+
+    const result = await scraper.scrape();
+    // Only the valid "Jan 24" row should produce an event
+    expect(result.events).toHaveLength(1);
+  });
+
+  it("skips rows with malformed time text", async () => {
+    const htmlWithBadTime = `
+    <html><body>
+      <table>
+        <tr><th>Date</th><th>Time</th></tr>
+        <tr><td>Jan 24</td><td>not-a-time</td></tr>
+      </table>
+    </body></html>`;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(htmlWithBadTime),
+      })
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+  });
+
+  it("always sets fixed metadata fields for all events", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(SAMPLE_HTML),
+      })
+    );
+
+    const result = await scraper.scrape();
+    for (const event of result.events) {
+      expect(event.title).toBe("Jazz Under the Stars");
+      expect(event.eventType).toBe("astronomy");
+      expect(event.cost).toBe("Free");
+      expect(event.isOnline).toBe(false);
+      expect(event.isCanceled).toBe(false);
+      expect(event.timezone).toBe("America/Los_Angeles");
+      expect(event.subjects).toEqual(["astronomy", "jazz", "stargazing"]);
+      expect(event.url).toBe("https://collegeofsanmateo.edu/astronomy/observatory.asp");
+    }
+  });
 });
