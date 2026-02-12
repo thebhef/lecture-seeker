@@ -60,6 +60,7 @@ const EVENT_TYPE_ALIASES: Record<string, string> = {
   talks: "lecture",
   presentation: "lecture",
   "lecture/panel": "lecture",
+  "lecture/presentation/talk": "lecture",
   // performance variants
   "performing arts": "performance",
   performances: "performance",

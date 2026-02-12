@@ -1,9 +1,6 @@
 "use client";
 
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import listPlugin from "@fullcalendar/list";
+import { useEffect, useRef, useState } from "react";
 import type { EventWithSource } from "@/lib/types";
 
 interface CalendarViewProps {
@@ -18,16 +15,17 @@ const SOURCE_COLORS: Record<string, string> = {
   "csm-observatory": "#2563eb",
 };
 
-export function CalendarView({ events, onSelect }: CalendarViewProps) {
+function buildCalendarEvents(events: EventWithSource[]) {
   const now = new Date();
-  const calendarEvents = events.map((event) => {
-    const eventEnd = event.endTime ? new Date(event.endTime) : new Date(event.startTime);
-    const past = eventEnd < now;
+  return events.map((event) => {
+    const startTime = new Date(event.startTime);
+    const endTime = event.endTime ? new Date(event.endTime) : undefined;
+    const past = (endTime || startTime) < now;
     return {
       id: event.id,
       title: event.title,
-      start: event.startTime,
-      end: event.endTime || undefined,
+      start: startTime,
+      end: endTime,
       allDay: event.isAllDay,
       backgroundColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
       borderColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
@@ -35,27 +33,73 @@ export function CalendarView({ events, onSelect }: CalendarViewProps) {
       extendedProps: { event },
     };
   });
+}
 
-  return (
-    <div className="calendar-wrapper">
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
+export function CalendarView({ events, onSelect }: CalendarViewProps) {
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const calendarInstanceRef = useRef<any>(null);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  const [ready, setReady] = useState(false);
+
+  // Initialize FullCalendar imperatively to avoid SSR issues
+  useEffect(() => {
+    let mounted = true;
+
+    async function init() {
+      const { Calendar } = await import("@fullcalendar/core");
+      const dayGridPlugin = (await import("@fullcalendar/daygrid")).default;
+      const timeGridPlugin = (await import("@fullcalendar/timegrid")).default;
+      const listPlugin = (await import("@fullcalendar/list")).default;
+
+      if (!mounted || !calendarRef.current) return;
+
+      const calendar = new Calendar(calendarRef.current, {
+        plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
+        initialView: "dayGridMonth",
+        headerToolbar: {
           left: "prev,next today",
           center: "title",
           right: "dayGridMonth,timeGridWeek,listWeek",
-        }}
-        events={calendarEvents}
-        eventClick={(info) => {
+        },
+        events: [],
+        eventClick: (info) => {
           const event = info.event.extendedProps.event as EventWithSource;
-          onSelect(event);
-        }}
-        height="auto"
-        eventDisplay="block"
-        dayMaxEvents={3}
-        nowIndicator
-      />
+          onSelectRef.current(event);
+        },
+        height: "auto",
+        eventDisplay: "block",
+        dayMaxEvents: 3,
+        nowIndicator: true,
+      });
+
+      calendar.render();
+      calendarInstanceRef.current = calendar;
+      setReady(true);
+    }
+
+    init();
+
+    return () => {
+      mounted = false;
+      calendarInstanceRef.current?.destroy();
+      calendarInstanceRef.current = null;
+    };
+  }, []);
+
+  // Update events when data changes or calendar becomes ready
+  useEffect(() => {
+    const calendar = calendarInstanceRef.current;
+    if (!calendar || !ready) return;
+
+    const existingSources = calendar.getEventSources();
+    existingSources.forEach((s: any) => s.remove());
+    calendar.addEventSource(buildCalendarEvents(events));
+  }, [events, ready]);
+
+  return (
+    <div className="calendar-wrapper">
+      <div ref={calendarRef} />
       <style jsx global>{`
         .calendar-wrapper .fc {
           --fc-border-color: var(--color-border);
@@ -79,6 +123,29 @@ export function CalendarView({ events, onSelect }: CalendarViewProps) {
         }
         .calendar-wrapper .fc-event-past {
           opacity: 0.5;
+        }
+        /* Undo Tailwind v4 preflight resets that break FullCalendar */
+        .calendar-wrapper table {
+          border-collapse: collapse;
+        }
+        .calendar-wrapper th {
+          text-align: inherit;
+        }
+        .calendar-wrapper button {
+          background-color: revert;
+          border: revert;
+          padding: revert;
+          font: revert;
+          color: revert;
+        }
+        .calendar-wrapper .fc-button {
+          background-color: var(--fc-button-bg-color);
+          border-color: var(--fc-button-border-color);
+          color: #fff;
+        }
+        .calendar-wrapper a {
+          color: inherit;
+          text-decoration: inherit;
         }
       `}</style>
     </div>

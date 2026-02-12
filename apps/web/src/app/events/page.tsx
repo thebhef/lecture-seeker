@@ -34,7 +34,16 @@ function EventsContent() {
     try {
       const params = new URLSearchParams(searchParams.toString());
       if (!params.has("limit")) {
-        params.set("limit", viewMode === "calendar" ? "200" : "50");
+        params.set("limit", viewMode === "calendar" ? "500" : "50");
+      }
+      // Default to upcoming events (now through 1 year out) when no date filter is set
+      if (!params.has("startAfter") && !params.has("startBefore")) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        params.set("startAfter", today.toISOString());
+        const oneYearOut = new Date(today);
+        oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+        params.set("startBefore", oneYearOut.toISOString());
       }
       const res = await fetch(`/api/events?${params.toString()}`);
       const data = await res.json();

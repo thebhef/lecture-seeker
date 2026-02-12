@@ -9,8 +9,10 @@ import {
   AlertCircle,
   CheckCircle,
   Sparkles,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 
 interface SourceStatus {
   id: string;
@@ -26,6 +28,8 @@ interface SourceStatus {
   lastScrapeNew: number;
   lastScrapeDuration: number | null;
   totalEvents: number;
+  earliestEvent: string | null;
+  latestEvent: string | null;
   _count: { events: number };
 }
 
@@ -43,6 +47,15 @@ export default function StatusPage() {
       // ignore
     }
     setLoading(false);
+  };
+
+  const toggleEnabled = async (id: string, currentEnabled: boolean) => {
+    await fetch(`/api/sources/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: !currentEnabled }),
+    });
+    fetchStatus();
   };
 
   useEffect(() => {
@@ -161,9 +174,21 @@ export default function StatusPage() {
                     </p>
                   )}
                 </div>
+
+                <button
+                  onClick={() => toggleEnabled(source.id, source.enabled)}
+                  className="shrink-0 rounded-md p-1.5 hover:bg-muted"
+                  title={source.enabled ? "Disable source" : "Enable source"}
+                >
+                  {source.enabled ? (
+                    <ToggleRight className="h-6 w-6 text-green-600" />
+                  ) : (
+                    <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+                  )}
+                </button>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-5">
+              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Last Scraped</p>
                   <p className="text-sm font-medium">
@@ -180,17 +205,10 @@ export default function StatusPage() {
                   </p>
                   <p className="text-sm font-medium">
                     {source.lastScrapeEvents.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">New Events</p>
-                  <p className="text-sm font-medium">
-                    {source.lastScrapeNew > 0 ? (
-                      <span className="text-green-600">
-                        +{source.lastScrapeNew}
+                    {source.lastScrapeNew > 0 && (
+                      <span className="text-green-600 ml-1">
+                        (+{source.lastScrapeNew} new)
                       </span>
-                    ) : (
-                      source.lastScrapeNew
                     )}
                   </p>
                 </div>
@@ -205,6 +223,22 @@ export default function StatusPage() {
                   <p className="text-sm font-medium">
                     {source.lastScrapeDuration != null
                       ? `${source.lastScrapeDuration}s`
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Earliest Event</p>
+                  <p className="text-sm font-medium">
+                    {source.earliestEvent
+                      ? format(new Date(source.earliestEvent), "MMM d, yyyy")
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Latest Event</p>
+                  <p className="text-sm font-medium">
+                    {source.latestEvent
+                      ? format(new Date(source.latestEvent), "MMM d, yyyy")
                       : "—"}
                   </p>
                 </div>

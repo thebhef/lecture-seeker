@@ -6,6 +6,7 @@ import { SearchBar } from "./SearchBar";
 import { SourceFilter } from "./SourceFilter";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { TimeOfDayFilter } from "./TimeOfDayFilter";
+import { DateRangeFilter } from "./DateRangeFilter";
 import { X } from "lucide-react";
 
 interface FilterData {
@@ -44,12 +45,20 @@ export function FilterSidebar() {
     router.push("/events");
   }, [router]);
 
+  // Convert ISO date params to YYYY-MM-DD for input[type=date]
+  const startAfterParam = searchParams.get("startAfter") || "";
+  const startBeforeParam = searchParams.get("startBefore") || "";
+  const startAfterDate = startAfterParam ? startAfterParam.slice(0, 10) : "";
+  const startBeforeDate = startBeforeParam ? startBeforeParam.slice(0, 10) : "";
+
   const hasFilters =
     searchParams.has("q") ||
     searchParams.has("source") ||
     searchParams.has("eventType") ||
     searchParams.has("timeOfDay") ||
-    searchParams.has("location");
+    searchParams.has("location") ||
+    searchParams.has("startAfter") ||
+    searchParams.has("startBefore");
 
   return (
     <aside className="w-64 shrink-0 space-y-5">
@@ -71,6 +80,17 @@ export function FilterSidebar() {
       <SearchBar
         value={searchParams.get("q") || ""}
         onChange={(v) => updateParam("q", v || null)}
+      />
+
+      <DateRangeFilter
+        startAfter={startAfterDate}
+        startBefore={startBeforeDate}
+        onStartAfterChange={(v) =>
+          updateParam("startAfter", v ? new Date(v + "T00:00:00").toISOString() : null)
+        }
+        onStartBeforeChange={(v) =>
+          updateParam("startBefore", v ? new Date(v + "T23:59:59").toISOString() : null)
+        }
       />
 
       {filters && (

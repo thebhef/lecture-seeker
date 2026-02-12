@@ -10,7 +10,40 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({ data: sources });
+  // Get earliest/latest event dates per source
+  const dateRanges = await Promise.all(
+    sources.map(async (source) => {
+      const [earliest, latest] = await Promise.all([
+        prisma.event.findFirst({
+          where: { sourceId: source.id },
+          orderBy: { startTime: "asc" },
+          select: { startTime: true },
+        }),
+        prisma.event.findFirst({
+          where: { sourceId: source.id },
+          orderBy: { startTime: "desc" },
+          select: { startTime: true },
+        }),
+      ]);
+      return {
+        id: source.id,
+        earliestEvent: earliest?.startTime || null,
+        latestEvent: latest?.startTime || null,
+      };
+    })
+  );
+
+  const dateRangeMap = Object.fromEntries(
+    dateRanges.map((d) => [d.id, d])
+  );
+
+  const enriched = sources.map((source) => ({
+    ...source,
+    earliestEvent: dateRangeMap[source.id]?.earliestEvent || null,
+    latestEvent: dateRangeMap[source.id]?.latestEvent || null,
+  }));
+
+  return NextResponse.json({ data: enriched });
 }
 
 export async function POST(request: NextRequest) {

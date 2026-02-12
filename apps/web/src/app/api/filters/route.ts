@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { EVENT_TYPES } from "@lecture-seeker/shared";
 
 export async function GET() {
   const [eventTypes, sources, locations] = await Promise.all([
@@ -23,10 +24,12 @@ export async function GET() {
     }),
   ]);
 
+  const knownTypes = new Set(Object.keys(EVENT_TYPES));
+
   return NextResponse.json({
     eventTypes: eventTypes
       .map((e) => e.eventType)
-      .filter(Boolean) as string[],
+      .filter((t): t is string => !!t && knownTypes.has(t)),
     sources: sources.map((s) => ({ slug: s.slug, name: s.name })),
     locations: locations
       .map((e) => e.location)
