@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, TIME_OF_DAY } from "../constants";
+import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, TIME_OF_DAY, normalizeEventType } from "../constants";
 
 describe("SOURCE_SLUGS", () => {
   it("contains all expected source slugs", () => {
@@ -54,6 +54,50 @@ describe("EVENT_TYPES", () => {
 
   it("has at least 10 event types", () => {
     expect(Object.keys(EVENT_TYPES).length).toBeGreaterThanOrEqual(10);
+  });
+});
+
+describe("normalizeEventType", () => {
+  it("returns canonical keys as-is", () => {
+    expect(normalizeEventType("lecture")).toBe("lecture");
+    expect(normalizeEventType("exhibition")).toBe("exhibition");
+    expect(normalizeEventType("sports")).toBe("sports");
+    expect(normalizeEventType("concert")).toBe("concert");
+  });
+
+  it("normalizes known aliases", () => {
+    expect(normalizeEventType("exhibit")).toBe("exhibition");
+    expect(normalizeEventType("Exhibit")).toBe("exhibition");
+    expect(normalizeEventType("talk")).toBe("lecture");
+    expect(normalizeEventType("presentation")).toBe("lecture");
+    expect(normalizeEventType("screening")).toBe("film");
+    expect(normalizeEventType("performing arts")).toBe("performance");
+    expect(normalizeEventType("symposium")).toBe("conference");
+    expect(normalizeEventType("reception")).toBe("social");
+    expect(normalizeEventType("athletics")).toBe("sports");
+  });
+
+  it("is case-insensitive", () => {
+    expect(normalizeEventType("LECTURE")).toBe("lecture");
+    expect(normalizeEventType("Exhibition")).toBe("exhibition");
+    expect(normalizeEventType("TALK")).toBe("lecture");
+  });
+
+  it("trims whitespace", () => {
+    expect(normalizeEventType("  lecture  ")).toBe("lecture");
+    expect(normalizeEventType(" exhibit ")).toBe("exhibition");
+  });
+
+  it("returns undefined for unrecognized strings", () => {
+    expect(normalizeEventType("Berkeley Graduate Student Conference")).toBeUndefined();
+    expect(normalizeEventType("Some Random Exhibition Title")).toBeUndefined();
+    expect(normalizeEventType("xyz")).toBeUndefined();
+  });
+
+  it("returns undefined for null/undefined/empty", () => {
+    expect(normalizeEventType(undefined)).toBeUndefined();
+    expect(normalizeEventType(null)).toBeUndefined();
+    expect(normalizeEventType("")).toBeUndefined();
   });
 });
 

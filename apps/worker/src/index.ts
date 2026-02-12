@@ -55,7 +55,23 @@ async function scrapeSource(source: Source) {
     const result = await scraper.scrape();
 
     let upserted = 0;
+    let newEvents = 0;
+
+    // Get existing event IDs for this source to track new vs updated
+    const existingIds = new Set(
+      (
+        await prisma.event.findMany({
+          where: { sourceId: source.id },
+          select: { sourceEventId: true },
+        })
+      ).map((e) => e.sourceEventId)
+    );
+
     for (const event of result.events) {
+      if (!existingIds.has(event.sourceEventId)) {
+        newEvents++;
+      }
+
       await prisma.event.upsert({
         where: {
           sourceId_sourceEventId: {
@@ -118,7 +134,12 @@ async function scrapeSource(source: Source) {
     }
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`  Done: ${upserted} events upserted in ${elapsed}s`);
+    const totalEvents = await prisma.event.count({
+      where: { sourceId: source.id },
+    });
+    console.log(
+      `  Done: ${upserted} events upserted (${newEvents} new) in ${elapsed}s. Total: ${totalEvents}`
+    );
 
     await prisma.source.update({
       where: { id: source.id },
@@ -126,6 +147,10 @@ async function scrapeSource(source: Source) {
         lastScrapedAt: new Date(),
         lastError:
           result.errors.length > 0 ? result.errors.join("; ") : null,
+        lastScrapeEvents: result.events.length,
+        lastScrapeNew: newEvents,
+        lastScrapeDuration: parseFloat(elapsed),
+        totalEvents,
       },
     });
   } catch (err) {

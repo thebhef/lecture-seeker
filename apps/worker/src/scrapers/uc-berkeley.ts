@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType } from "@lecture-seeker/shared";
 
 interface BerkeleyApiResponse {
   meta: { total_pages: number; page: number };
@@ -72,8 +72,12 @@ export class UCBerkeleyScraper extends BaseScraper {
     // Berkeley often uses "Category | Title" format
     const pipeMatch = title.match(/^(.+?)\s*\|\s*(.+)$/);
     if (pipeMatch) {
-      eventType = pipeMatch[1].trim().toLowerCase();
-      title = pipeMatch[2].trim();
+      const candidate = normalizeEventType(pipeMatch[1]);
+      if (candidate) {
+        eventType = candidate;
+        title = pipeMatch[2].trim();
+      }
+      // If the prefix isn't a recognized category, keep the full title as-is
     }
 
     const endIso = event.date2_utc || event.date2_iso;

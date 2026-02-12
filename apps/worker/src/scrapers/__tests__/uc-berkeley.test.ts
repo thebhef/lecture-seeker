@@ -70,6 +70,28 @@ describe("UCBerkeleyScraper", () => {
     expect(result.events[0].eventType).toBe("exhibition");
   });
 
+  it("normalizes 'Exhibit' alias to 'exhibition'", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([mockBerkeleyEvent({ title: "Exhibit | Modern Sculpture" })])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].title).toBe("Modern Sculpture");
+    expect(result.events[0].eventType).toBe("exhibition");
+  });
+
+  it("keeps full title when pipe prefix is not a recognized category", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockBerkeleyEvent({ title: "Berkeley Graduate Conference | Keynote Address" }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].title).toBe("Berkeley Graduate Conference | Keynote Address");
+    expect(result.events[0].eventType).toBeUndefined();
+  });
+
   it("preserves title without pipe separator", async () => {
     vi.stubGlobal(
       "fetch",

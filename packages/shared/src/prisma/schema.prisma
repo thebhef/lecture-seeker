@@ -22,9 +22,13 @@ model Source {
   config        Json?
   enabled       Boolean    @default(true)
   isBuiltIn     Boolean    @default(false)
-  lastScrapedAt DateTime?
-  lastError     String?
-  createdAt     DateTime   @default(now())
+  lastScrapedAt      DateTime?
+  lastError          String?
+  lastScrapeEvents   Int       @default(0)
+  lastScrapeNew      Int       @default(0)
+  lastScrapeDuration Float?
+  totalEvents        Int       @default(0)
+  createdAt          DateTime  @default(now())
   updatedAt     DateTime   @updatedAt
   events        Event[]
 }

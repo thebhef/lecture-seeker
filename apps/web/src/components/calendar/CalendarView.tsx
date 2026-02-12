@@ -19,16 +19,22 @@ const SOURCE_COLORS: Record<string, string> = {
 };
 
 export function CalendarView({ events, onSelect }: CalendarViewProps) {
-  const calendarEvents = events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    start: event.startTime,
-    end: event.endTime || undefined,
-    allDay: event.isAllDay,
-    backgroundColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
-    borderColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
-    extendedProps: { event },
-  }));
+  const now = new Date();
+  const calendarEvents = events.map((event) => {
+    const eventEnd = event.endTime ? new Date(event.endTime) : new Date(event.startTime);
+    const past = eventEnd < now;
+    return {
+      id: event.id,
+      title: event.title,
+      start: event.startTime,
+      end: event.endTime || undefined,
+      allDay: event.isAllDay,
+      backgroundColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
+      borderColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
+      classNames: past ? ["fc-event-past"] : [],
+      extendedProps: { event },
+    };
+  });
 
   return (
     <div className="calendar-wrapper">
@@ -70,6 +76,9 @@ export function CalendarView({ events, onSelect }: CalendarViewProps) {
         .calendar-wrapper .fc .fc-toolbar-title {
           font-size: 1.125rem;
           font-weight: 600;
+        }
+        .calendar-wrapper .fc-event-past {
+          opacity: 0.5;
         }
       `}</style>
     </div>

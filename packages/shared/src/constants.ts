@@ -47,6 +47,68 @@ export const EVENT_TYPES: Record<string, string> = {
   other: "Other",
 };
 
+// Maps variant strings to canonical event type keys
+const EVENT_TYPE_ALIASES: Record<string, string> = {
+  // exhibition variants
+  exhibit: "exhibition",
+  exhibits: "exhibition",
+  gallery: "exhibition",
+  "art exhibit": "exhibition",
+  "art exhibition": "exhibition",
+  // lecture variants
+  talk: "lecture",
+  talks: "lecture",
+  presentation: "lecture",
+  "lecture/panel": "lecture",
+  // performance variants
+  "performing arts": "performance",
+  performances: "performance",
+  theater: "performance",
+  theatre: "performance",
+  dance: "performance",
+  recital: "performance",
+  // concert variants
+  concerts: "concert",
+  music: "concert",
+  // workshop variants
+  workshops: "workshop",
+  training: "workshop",
+  // conference variants
+  symposium: "conference",
+  colloquium: "conference",
+  forum: "conference",
+  // seminar variants
+  seminars: "seminar",
+  // film variants
+  screening: "film",
+  "film screening": "film",
+  films: "film",
+  // social variants
+  reception: "social",
+  mixer: "social",
+  networking: "social",
+  "career/job": "social",
+  // sports variants
+  athletics: "sports",
+  game: "sports",
+  match: "sports",
+};
+
+/**
+ * Normalizes an event type string to a canonical EVENT_TYPES key.
+ * Returns the canonical key if recognized, or undefined if the input
+ * doesn't match any known event type or alias.
+ */
+export function normalizeEventType(
+  raw: string | undefined | null
+): string | undefined {
+  if (!raw) return undefined;
+  const lower = raw.trim().toLowerCase();
+  if (lower in EVENT_TYPES) return lower;
+  if (lower in EVENT_TYPE_ALIASES) return EVENT_TYPE_ALIASES[lower];
+  return undefined;
+}
+
 export const TIME_OF_DAY = {
   morning: { start: 6, end: 12, label: "Morning (6am-12pm)" },
   afternoon: { start: 12, end: 17, label: "Afternoon (12pm-5pm)" },

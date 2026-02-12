@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, isPast } from "date-fns";
 import { MapPin, Clock, ExternalLink, Tag } from "lucide-react";
 import type { EventWithSource } from "@/lib/types";
 
@@ -21,11 +21,13 @@ export function EventList({ events, onSelect }: EventListProps) {
 
   return (
     <div className="divide-y divide-border">
-      {events.map((event) => (
+      {events.map((event) => {
+        const past = isPast(new Date(event.endTime || event.startTime));
+        return (
         <button
           key={event.id}
           onClick={() => onSelect(event)}
-          className="flex w-full gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+          className={`flex w-full gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/50${past ? " opacity-50" : ""}`}
         >
           <div className="flex w-16 shrink-0 flex-col items-center rounded-lg bg-primary/10 py-2 text-primary">
             <span className="text-xs font-medium uppercase">
@@ -75,7 +77,8 @@ export function EventList({ events, onSelect }: EventListProps) {
             </div>
           </div>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

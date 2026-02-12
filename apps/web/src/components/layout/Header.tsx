@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Settings, Search } from "lucide-react";
+import { Calendar, Settings, Search, Activity } from "lucide-react";
 
 export function Header() {
   const pathname = usePathname();
@@ -37,6 +37,17 @@ export function Header() {
           >
             <Settings className="h-4 w-4" />
             Sources
+          </Link>
+          <Link
+            href="/status"
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+              pathname === "/status"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <Activity className="h-4 w-4" />
+            Status
           </Link>
         </nav>
       </div>

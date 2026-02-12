@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, isPast } from "date-fns";
 import { MapPin, Clock, ExternalLink } from "lucide-react";
 import type { EventWithSource } from "@/lib/types";
 
@@ -21,11 +21,13 @@ export function EventGrid({ events, onSelect }: EventGridProps) {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {events.map((event) => (
+      {events.map((event) => {
+        const past = isPast(new Date(event.endTime || event.startTime));
+        return (
         <button
           key={event.id}
           onClick={() => onSelect(event)}
-          className="flex flex-col rounded-lg border border-border bg-card text-left transition-shadow hover:shadow-md"
+          className={`flex flex-col rounded-lg border border-border bg-card text-left transition-shadow hover:shadow-md${past ? " opacity-50" : ""}`}
         >
           {event.imageUrl && (
             <div className="relative h-36 w-full overflow-hidden rounded-t-lg bg-muted">
@@ -73,7 +75,8 @@ export function EventGrid({ events, onSelect }: EventGridProps) {
             </div>
           </div>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

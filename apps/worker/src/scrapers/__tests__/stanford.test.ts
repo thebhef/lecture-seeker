@@ -141,6 +141,28 @@ describe("StanfordScraper", () => {
     expect(result.errors.length).toBeGreaterThan(0);
   });
 
+  it("normalizes known event type aliases", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockEvent({ filters: { event_types: [{ name: "Exhibit" }] } }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].eventType).toBe("exhibition");
+  });
+
+  it("returns undefined for unrecognized event types", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([
+        mockEvent({ filters: { event_types: [{ name: "Unusual Category" }] } }),
+      ])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].eventType).toBeUndefined();
+  });
+
   it("handles location with only location_name (no room)", async () => {
     vi.stubGlobal(
       "fetch",
