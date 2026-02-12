@@ -27,3 +27,176 @@ body {
   color: var(--color-foreground);
   background: var(--color-background);
 }
+
+/*
+ * FullCalendar overrides — undo Tailwind v4 preflight resets.
+ * Tailwind v4 sets border-width:0, margin:0, padding:0 on all elements
+ * via the * selector. FullCalendar relies on borders for its grid and
+ * specific padding/margin values for layout. We restore these here.
+ */
+
+/* Theme variables */
+.calendar-wrapper .fc {
+  --fc-border-color: var(--color-border);
+  --fc-button-bg-color: var(--color-primary);
+  --fc-button-border-color: var(--color-primary);
+  --fc-button-hover-bg-color: color-mix(in srgb, var(--color-primary), black 10%);
+  --fc-button-hover-border-color: color-mix(in srgb, var(--color-primary), black 10%);
+  --fc-button-active-bg-color: color-mix(in srgb, var(--color-primary), black 20%);
+  --fc-button-active-border-color: color-mix(in srgb, var(--color-primary), black 20%);
+  --fc-today-bg-color: color-mix(in srgb, var(--color-primary), transparent 95%);
+  font-size: 0.875rem;
+}
+
+/* Restore border-style on everything inside FC so border-width declarations work */
+.calendar-wrapper .fc *,
+.calendar-wrapper .fc *::before,
+.calendar-wrapper .fc *::after {
+  border-style: solid;
+  border-width: 0;
+}
+
+/* Table grid borders */
+.calendar-wrapper .fc table {
+  border-collapse: collapse;
+}
+.calendar-wrapper .fc th {
+  text-align: inherit;
+}
+.calendar-wrapper .fc td,
+.calendar-wrapper .fc th {
+  padding: 0;
+}
+.calendar-wrapper .fc .fc-scrollgrid {
+  border-width: 1px;
+}
+.calendar-wrapper .fc .fc-scrollgrid td,
+.calendar-wrapper .fc .fc-scrollgrid th {
+  border-width: 1px;
+}
+.calendar-wrapper .fc .fc-scrollgrid-section > td {
+  border-width: 0;
+}
+.calendar-wrapper .fc .fc-col-header-cell {
+  border-width: 1px;
+  padding: 4px 0;
+}
+
+/* Day cells need relative positioning for event placement */
+.calendar-wrapper .fc .fc-daygrid-day-frame {
+  position: relative;
+  min-height: 100%;
+}
+.calendar-wrapper .fc .fc-daygrid-day-top {
+  display: flex;
+  flex-direction: row-reverse;
+}
+.calendar-wrapper .fc .fc-daygrid-day-number {
+  padding: 4px;
+}
+
+/* Events */
+.calendar-wrapper .fc .fc-event {
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 1px 3px;
+  border-width: 0;
+  border-left-width: 3px;
+  display: block;
+  overflow: hidden;
+  margin-bottom: 1px;
+}
+.calendar-wrapper .fc .fc-daygrid-event-harness {
+  margin: 0 2px;
+}
+.calendar-wrapper .fc .fc-event-past {
+  opacity: 0.5;
+}
+
+/* "+N more" link */
+.calendar-wrapper .fc .fc-daygrid-more-link {
+  display: block;
+  padding: 1px 3px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+/* Toolbar */
+.calendar-wrapper .fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.calendar-wrapper .fc .fc-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+}
+.calendar-wrapper .fc .fc-toolbar-chunk {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+}
+
+/* FC buttons — restore from Tailwind's button reset */
+.calendar-wrapper .fc .fc-button {
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.4em 0.65em;
+  font-size: 1em;
+  line-height: 1.5;
+  border-radius: 0.25em;
+  cursor: pointer;
+  font-family: inherit;
+}
+.calendar-wrapper .fc .fc-button-primary {
+  color: #fff;
+  background-color: var(--fc-button-bg-color);
+  border-color: var(--fc-button-border-color);
+}
+.calendar-wrapper .fc .fc-button-primary:hover {
+  background-color: var(--fc-button-hover-bg-color);
+  border-color: var(--fc-button-hover-border-color);
+}
+.calendar-wrapper .fc .fc-button-primary:not(:disabled).fc-button-active,
+.calendar-wrapper .fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--fc-button-active-bg-color);
+  border-color: var(--fc-button-active-border-color);
+}
+.calendar-wrapper .fc .fc-button-group {
+  display: inline-flex;
+}
+.calendar-wrapper .fc .fc-button-group > .fc-button {
+  border-radius: 0;
+}
+.calendar-wrapper .fc .fc-button-group > .fc-button:first-child {
+  border-top-left-radius: 0.25em;
+  border-bottom-left-radius: 0.25em;
+}
+.calendar-wrapper .fc .fc-button-group > .fc-button:last-child {
+  border-top-right-radius: 0.25em;
+  border-bottom-right-radius: 0.25em;
+}
+
+/* Links and images */
+.calendar-wrapper .fc a {
+  color: inherit;
+  text-decoration: inherit;
+}
+.calendar-wrapper .fc img {
+  max-width: none;
+}
+
+/* List view */
+.calendar-wrapper .fc .fc-list-event td {
+  border-width: 1px;
+  padding: 8px 14px;
+}
+.calendar-wrapper .fc .fc-list-day th {
+  border-width: 1px;
+  padding: 8px 14px;
+}

@@ -52,7 +52,7 @@ export class StanfordScraper extends BaseScraper {
     let totalPages = 1;
 
     do {
-      const url = `https://events.stanford.edu/api/2/events?page=${page}&per_page=100`;
+      const url = `https://events.stanford.edu/api/2/events?page=${page}&per_page=100&days=365`;
       const res = await fetch(url);
       if (!res.ok) {
         this.addError(`API returned ${res.status} on page ${page}`);

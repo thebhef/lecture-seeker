@@ -36,8 +36,19 @@ export class UCBerkeleyScraper extends BaseScraper {
     let page = 1;
     let totalPages = 1;
 
+    // Request events for the next year to get a full range of future events
+    const today = new Date();
+    const startDate = today.toISOString().slice(0, 10);
+    const endDate = new Date(
+      today.getFullYear() + 1,
+      today.getMonth(),
+      today.getDate()
+    )
+      .toISOString()
+      .slice(0, 10);
+
     do {
-      const url = `https://events.berkeley.edu/live/json/events/page/${page}`;
+      const url = `https://events.berkeley.edu/live/json/events/start_date/${startDate}/end_date/${endDate}/page/${page}`;
       const res = await fetch(url);
       if (!res.ok) {
         this.addError(`API returned ${res.status} on page ${page}`);

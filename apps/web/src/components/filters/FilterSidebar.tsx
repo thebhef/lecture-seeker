@@ -45,11 +45,19 @@ export function FilterSidebar() {
     router.push("/events");
   }, [router]);
 
-  // Convert ISO date params to YYYY-MM-DD for input[type=date]
+  // Compute default dates (today → 1 year out) matching what fetchEvents uses
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const oneYearOut = new Date(today);
+  oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
+  const defaultStartAfter = today.toISOString().slice(0, 10);
+  const defaultStartBefore = oneYearOut.toISOString().slice(0, 10);
+
+  // Convert ISO date params to YYYY-MM-DD for input[type=date], falling back to defaults
   const startAfterParam = searchParams.get("startAfter") || "";
   const startBeforeParam = searchParams.get("startBefore") || "";
-  const startAfterDate = startAfterParam ? startAfterParam.slice(0, 10) : "";
-  const startBeforeDate = startBeforeParam ? startBeforeParam.slice(0, 10) : "";
+  const startAfterDate = startAfterParam ? startAfterParam.slice(0, 10) : defaultStartAfter;
+  const startBeforeDate = startBeforeParam ? startBeforeParam.slice(0, 10) : defaultStartBefore;
 
   const hasFilters =
     searchParams.has("q") ||

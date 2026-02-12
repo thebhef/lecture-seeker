@@ -8,8 +8,20 @@ import { FilterSidebar } from "@/components/filters/FilterSidebar";
 import { EventList } from "@/components/events/EventList";
 import { EventGrid } from "@/components/events/EventGrid";
 import { EventDetail } from "@/components/events/EventDetail";
-import { CalendarView } from "@/components/calendar/CalendarView";
+import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+
+const CalendarView = dynamic(
+  () => import("@/components/calendar/CalendarView").then((m) => m.CalendarView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 import type { EventWithSource } from "@/lib/types";
 
 interface PaginatedResponse {
