@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useMemo } from "react";
-import { Calendar } from "@fullcalendar/core";
+import { useMemo, useCallback } from "react";
+import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
+import type { EventClickArg } from "@fullcalendar/core";
 import type { EventWithSource } from "@/lib/types";
 
 interface CalendarViewProps {
@@ -20,11 +21,6 @@ const SOURCE_COLORS: Record<string, string> = {
 };
 
 export function CalendarView({ events, onSelect }: CalendarViewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const calendarRef = useRef<Calendar | null>(null);
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
-
   const calendarEvents = useMemo(() => {
     const now = new Date();
     return events.map((event) => {
@@ -46,48 +42,28 @@ export function CalendarView({ events, onSelect }: CalendarViewProps) {
   }, [events]);
 
   const handleEventClick = useCallback(
-    (info: { event: { extendedProps: Record<string, unknown> } }) => {
-      onSelectRef.current(info.event.extendedProps.event as EventWithSource);
+    (info: EventClickArg) => {
+      onSelect(info.event.extendedProps.event as EventWithSource);
     },
-    []
+    [onSelect]
   );
 
-  // Initialize calendar once
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const calendar = new Calendar(el, {
-      plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
-      initialView: "dayGridMonth",
-      headerToolbar: {
-        left: "prev,next today",
-        center: "title",
-        right: "dayGridMonth,timeGridWeek,listWeek",
-      },
-      eventClick: handleEventClick,
-      height: "auto",
-      dayMaxEvents: 3,
-      nowIndicator: true,
-    });
-
-    calendar.render();
-    calendarRef.current = calendar;
-
-    return () => {
-      calendar.destroy();
-      calendarRef.current = null;
-    };
-  }, [handleEventClick]);
-
-  // Update events whenever they change
-  useEffect(() => {
-    const cal = calendarRef.current;
-    if (!cal) return;
-
-    cal.removeAllEventSources();
-    cal.addEventSource(calendarEvents);
-  }, [calendarEvents]);
-
-  return <div ref={containerRef} className="calendar-wrapper" />;
+  return (
+    <div className="calendar-wrapper">
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,listWeek",
+        }}
+        events={calendarEvents}
+        eventClick={handleEventClick}
+        height="auto"
+        dayMaxEvents={3}
+        nowIndicator={true}
+      />
+    </div>
+  );
 }
