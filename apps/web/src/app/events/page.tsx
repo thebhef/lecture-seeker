@@ -94,12 +94,13 @@ function EventsContent() {
         <div className="flex gap-6">
           <FilterSidebar />
 
-          <main className="min-w-0 flex-1">
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
+          <main className="relative min-w-0 flex-1">
+            {loading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : viewMode === "calendar" ? (
+            )}
+            {viewMode === "calendar" ? (
               <CalendarView events={events} onSelect={setSelectedEvent} />
             ) : viewMode === "grid" ? (
               <EventGrid events={events} onSelect={setSelectedEvent} />

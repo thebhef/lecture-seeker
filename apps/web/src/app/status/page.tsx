@@ -11,6 +11,7 @@ import {
   Sparkles,
   ToggleLeft,
   ToggleRight,
+  Trash2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -40,7 +41,7 @@ export default function StatusPage() {
   const fetchStatus = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/sources");
+      const res = await fetch("/api/sources", { cache: "no-store" });
       const json = await res.json();
       setSources(json.data || []);
     } catch {
@@ -55,6 +56,18 @@ export default function StatusPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ enabled: !currentEnabled }),
     });
+    fetchStatus();
+  };
+
+  const clearSourceEvents = async (sourceId: string) => {
+    if (!confirm("Clear all events for this source? They will be re-populated on the next scrape.")) return;
+    await fetch(`/api/sources/${sourceId}/events`, { method: "DELETE" });
+    fetchStatus();
+  };
+
+  const clearAllEvents = async () => {
+    if (!confirm("Clear ALL events from ALL sources? They will be re-populated on the next scrape.")) return;
+    await fetch("/api/events/clear", { method: "DELETE" });
     fetchStatus();
   };
 
@@ -84,14 +97,23 @@ export default function StatusPage() {
               Data freshness and scraper health
             </p>
           </div>
-          <button
-            onClick={fetchStatus}
-            disabled={loading}
-            className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={clearAllEvents}
+              className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear All
+            </button>
+            <button
+              onClick={fetchStatus}
+              disabled={loading}
+              className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Summary cards */}
@@ -175,17 +197,26 @@ export default function StatusPage() {
                   )}
                 </div>
 
-                <button
-                  onClick={() => toggleEnabled(source.id, source.enabled)}
-                  className="shrink-0 rounded-md p-1.5 hover:bg-muted"
-                  title={source.enabled ? "Disable source" : "Enable source"}
-                >
-                  {source.enabled ? (
-                    <ToggleRight className="h-6 w-6 text-green-600" />
-                  ) : (
-                    <ToggleLeft className="h-6 w-6 text-muted-foreground" />
-                  )}
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={() => clearSourceEvents(source.id)}
+                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive"
+                    title="Clear events for this source"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => toggleEnabled(source.id, source.enabled)}
+                    className="rounded-md p-1.5 hover:bg-muted"
+                    title={source.enabled ? "Disable source" : "Enable source"}
+                  >
+                    {source.enabled ? (
+                      <ToggleRight className="h-6 w-6 text-green-600" />
+                    ) : (
+                      <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
