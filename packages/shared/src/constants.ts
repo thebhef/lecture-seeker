@@ -4,6 +4,8 @@ export const SOURCE_SLUGS = {
   CAL_BEARS: "cal-bears",
   CSM_OBSERVATORY: "csm-observatory",
   SHORELINE_AMPHITHEATRE: "shoreline-amphitheatre",
+  GREEK_THEATRE: "greek-theatre",
+  CAL_ACADEMY: "cal-academy",
 } as const;
 
 export const BUILT_IN_SOURCES = [
@@ -36,6 +38,18 @@ export const BUILT_IN_SOURCES = [
     slug: SOURCE_SLUGS.SHORELINE_AMPHITHEATRE,
     type: "HTML_SCRAPE" as const,
     url: "https://www.livenation.com/venue/KovZpZA6ta1A/shoreline-amphitheatre-events",
+  },
+  {
+    name: "Greek Theatre Berkeley",
+    slug: SOURCE_SLUGS.GREEK_THEATRE,
+    type: "HTML_SCRAPE" as const,
+    url: "https://thegreekberkeley.com/calendar/",
+  },
+  {
+    name: "Cal Academy of Sciences",
+    slug: SOURCE_SLUGS.CAL_ACADEMY,
+    type: "HTML_SCRAPE" as const,
+    url: "https://www.calacademy.org/daily-calendar",
   },
 ];
 

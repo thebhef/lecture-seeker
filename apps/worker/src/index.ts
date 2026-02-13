@@ -6,6 +6,8 @@ import { UCBerkeleyScraper } from "./scrapers/uc-berkeley";
 import { CalBearsScraper } from "./scrapers/cal-bears";
 import { CSMObservatoryScraper } from "./scrapers/csm-observatory";
 import { ShorelineAmphitheatreScraper } from "./scrapers/shoreline-amphitheatre";
+import { GreekTheatreScraper } from "./scrapers/greek-theatre";
+import { CalAcademyScraper } from "./scrapers/cal-academy";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
 import { BUILT_IN_SOURCES } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
@@ -24,6 +26,10 @@ function getScraperForSource(source: Source): BaseScraper {
       return new CSMObservatoryScraper();
     case "shoreline-amphitheatre":
       return new ShorelineAmphitheatreScraper();
+    case "greek-theatre":
+      return new GreekTheatreScraper();
+    case "cal-academy":
+      return new CalAcademyScraper();
     default:
       if (source.type === "ICS_FEED") {
         return new GenericIcsScraper(source.slug, source.url);

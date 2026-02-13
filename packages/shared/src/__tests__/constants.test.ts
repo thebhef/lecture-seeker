@@ -9,14 +9,14 @@ describe("SOURCE_SLUGS", () => {
     expect(SOURCE_SLUGS.CSM_OBSERVATORY).toBe("csm-observatory");
   });
 
-  it("has exactly 4 sources", () => {
-    expect(Object.keys(SOURCE_SLUGS)).toHaveLength(4);
+  it("has exactly 7 sources", () => {
+    expect(Object.keys(SOURCE_SLUGS)).toHaveLength(7);
   });
 });
 
 describe("BUILT_IN_SOURCES", () => {
-  it("has exactly 4 built-in sources", () => {
-    expect(BUILT_IN_SOURCES).toHaveLength(4);
+  it("has exactly 7 built-in sources", () => {
+    expect(BUILT_IN_SOURCES).toHaveLength(7);
   });
 
   it("each source has required fields", () => {
