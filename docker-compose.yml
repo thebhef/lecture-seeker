@@ -30,6 +30,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@lectureseeker.local}
+      WORKER_URL: http://worker:3001
     depends_on:
       db:
         condition: service_healthy
@@ -42,6 +43,9 @@ services:
     environment:
       DATABASE_URL: postgresql://lectureseeker:${DB_PASSWORD:-changeme}@db:5432/lectureseeker
       SCRAPE_INTERVAL_HOURS: ${SCRAPE_INTERVAL_HOURS:-6}
+      WORKER_PORT: 3001
+    expose:
+      - "3001"
     depends_on:
       db:
         condition: service_healthy

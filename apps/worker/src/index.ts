@@ -1,9 +1,11 @@
 import { PrismaClient, type Source } from "@prisma/client";
 import cron from "node-cron";
+import http from "node:http";
 import { StanfordScraper } from "./scrapers/stanford";
 import { UCBerkeleyScraper } from "./scrapers/uc-berkeley";
 import { CalBearsScraper } from "./scrapers/cal-bears";
 import { CSMObservatoryScraper } from "./scrapers/csm-observatory";
+import { ShorelineAmphitheatreScraper } from "./scrapers/shoreline-amphitheatre";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
 import { BUILT_IN_SOURCES } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
@@ -20,6 +22,8 @@ function getScraperForSource(source: Source): BaseScraper {
       return new CalBearsScraper();
     case "csm-observatory":
       return new CSMObservatoryScraper();
+    case "shoreline-amphitheatre":
+      return new ShorelineAmphitheatreScraper();
     default:
       if (source.type === "ICS_FEED") {
         return new GenericIcsScraper(source.slug, source.url);
@@ -175,13 +179,16 @@ async function scrapeAll() {
   console.log("--- Scrape run complete ---\n");
 }
 
+let scraping = false;
+
 async function main() {
   console.log("Lecture Seeker Worker starting...");
 
   await seedSources();
 
   // Run initial scrape
-  await scrapeAll();
+  scraping = true;
+  await scrapeAll().finally(() => { scraping = false; });
 
   // Schedule periodic scrapes
   const hours = parseInt(process.env.SCRAPE_INTERVAL_HOURS || "6", 10);
@@ -189,9 +196,47 @@ async function main() {
   console.log(`Scheduling scrapes: ${cronExpression}`);
 
   cron.schedule(cronExpression, () => {
-    scrapeAll().catch((err) => {
-      console.error("Scheduled scrape failed:", err);
-    });
+    if (scraping) return;
+    scraping = true;
+    scrapeAll()
+      .catch((err) => console.error("Scheduled scrape failed:", err))
+      .finally(() => { scraping = false; });
+  });
+
+  // HTTP server to accept on-demand scrape triggers
+  const port = parseInt(process.env.WORKER_PORT || "3001", 10);
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+
+    if (req.method === "POST" && req.url === "/scrape") {
+      if (scraping) {
+        res.writeHead(409);
+        res.end(JSON.stringify({ error: "Scrape already in progress" }));
+        return;
+      }
+      scraping = true;
+      console.log("On-demand scrape triggered via HTTP");
+      scrapeAll()
+        .catch((err) => console.error("On-demand scrape failed:", err))
+        .finally(() => { scraping = false; });
+
+      res.writeHead(202);
+      res.end(JSON.stringify({ status: "started" }));
+      return;
+    }
+
+    if (req.method === "GET" && req.url === "/health") {
+      res.writeHead(200);
+      res.end(JSON.stringify({ status: "ok", scraping }));
+      return;
+    }
+
+    res.writeHead(404);
+    res.end(JSON.stringify({ error: "Not found" }));
+  });
+
+  server.listen(port, () => {
+    console.log(`Worker HTTP server listening on port ${port}`);
   });
 
   console.log("Worker is running. Press Ctrl+C to stop.");

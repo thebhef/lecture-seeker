@@ -3,6 +3,7 @@ export const SOURCE_SLUGS = {
   UC_BERKELEY: "uc-berkeley",
   CAL_BEARS: "cal-bears",
   CSM_OBSERVATORY: "csm-observatory",
+  SHORELINE_AMPHITHEATRE: "shoreline-amphitheatre",
 } as const;
 
 export const BUILT_IN_SOURCES = [
@@ -29,6 +30,12 @@ export const BUILT_IN_SOURCES = [
     slug: SOURCE_SLUGS.CSM_OBSERVATORY,
     type: "HTML_SCRAPE" as const,
     url: "https://collegeofsanmateo.edu/astronomy/observatory.asp",
+  },
+  {
+    name: "Shoreline Amphitheatre",
+    slug: SOURCE_SLUGS.SHORELINE_AMPHITHEATRE,
+    type: "HTML_SCRAPE" as const,
+    url: "https://www.livenation.com/venue/KovZpZA6ta1A/shoreline-amphitheatre-events",
   },
 ];
 

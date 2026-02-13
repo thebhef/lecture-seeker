@@ -39,7 +39,6 @@ export default function StatusPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchStatus = async () => {
-    setLoading(true);
     try {
       const res = await fetch("/api/sources", { cache: "no-store" });
       const json = await res.json();
@@ -47,6 +46,22 @@ export default function StatusPage() {
     } catch {
       // ignore
     }
+  };
+
+  const triggerScrape = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/scrape", { method: "POST" });
+      if (res.ok) {
+        // Poll for updates while scrape is running
+        const poll = setInterval(fetchStatus, 3000);
+        // Stop polling after 5 minutes
+        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+      }
+    } catch {
+      // ignore
+    }
+    await fetchStatus();
     setLoading(false);
   };
 
@@ -106,12 +121,12 @@ export default function StatusPage() {
               Clear All
             </button>
             <button
-              onClick={fetchStatus}
+              onClick={triggerScrape}
               disabled={loading}
               className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Refresh
+              Scrape Now
             </button>
           </div>
         </div>
