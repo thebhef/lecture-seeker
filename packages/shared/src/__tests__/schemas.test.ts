@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { eventQuerySchema, createSourceSchema, sendInviteSchema } from "../schemas";
+import { API_DEFAULT_LIMIT, API_MAX_LIMIT } from "../constants";
 
 describe("eventQuerySchema", () => {
   it("applies defaults for page and limit", () => {
     const result = eventQuerySchema.parse({});
     expect(result.page).toBe(1);
-    expect(result.limit).toBe(50);
+    expect(result.limit).toBe(API_DEFAULT_LIMIT);
   });
 
   it("coerces string numbers to integers", () => {
@@ -19,8 +20,8 @@ describe("eventQuerySchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects limit above 200", () => {
-    const result = eventQuerySchema.safeParse({ limit: "201" });
+  it("rejects limit above API_MAX_LIMIT", () => {
+    const result = eventQuerySchema.safeParse({ limit: String(API_MAX_LIMIT + 1) });
     expect(result.success).toBe(false);
   });
 
@@ -51,21 +52,11 @@ describe("eventQuerySchema", () => {
     expect(falseResult.isOnline).toBe(false);
   });
 
-  it("validates timeOfDay enum", () => {
-    expect(eventQuerySchema.parse({ timeOfDay: "morning" }).timeOfDay).toBe("morning");
-    expect(eventQuerySchema.parse({ timeOfDay: "afternoon" }).timeOfDay).toBe("afternoon");
-    expect(eventQuerySchema.parse({ timeOfDay: "evening" }).timeOfDay).toBe("evening");
-
-    const invalid = eventQuerySchema.safeParse({ timeOfDay: "midnight" });
-    expect(invalid.success).toBe(false);
-  });
-
   it("leaves optional fields undefined when not provided", () => {
     const result = eventQuerySchema.parse({});
     expect(result.source).toBeUndefined();
     expect(result.eventType).toBeUndefined();
     expect(result.q).toBeUndefined();
-    expect(result.timeOfDay).toBeUndefined();
     expect(result.isOnline).toBeUndefined();
   });
 });

@@ -2,6 +2,8 @@ import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
 import { SOURCE_SLUGS, normalizeEventType } from "@lecture-seeker/shared";
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
+import { pacificDate } from "./timezone";
 
 const BASE_URL = "https://www.calacademy.org";
 const CALENDAR_PATH = "/daily-calendar-view";
@@ -48,10 +50,16 @@ function parseTime(
 
 export class CalAcademyScraper extends BaseScraper {
   sourceSlug = SOURCE_SLUGS.CAL_ACADEMY;
+  private cookies = "";
 
   async fetchAndParse(): Promise<NormalizedEvent[]> {
     const allEvents: NormalizedEvent[] = [];
     const today = new Date();
+
+    // Pre-fetch the main calendar page to obtain session cookies
+    await this.initSession();
+
+    let consecutiveFailures = 0;
 
     // Scrape each day's calendar page
     for (let i = 0; i < DAYS_AHEAD; i++) {
@@ -62,12 +70,59 @@ export class CalAcademyScraper extends BaseScraper {
       try {
         const dayEvents = await this.scrapeDayPage(date, dateStr);
         allEvents.push(...dayEvents);
+        consecutiveFailures = 0;
       } catch (err) {
+        consecutiveFailures++;
         this.addError(`Failed to scrape ${dateStr}: ${err}`);
+        // Abort early if every request is failing (likely blocked)
+        if (consecutiveFailures >= 5) {
+          this.addError(
+            "Aborting: 5 consecutive failures — the site may be blocking automated requests. " +
+            "Check if the Cal Academy website structure or anti-bot protections have changed."
+          );
+          break;
+        }
       }
     }
 
     return allEvents;
+  }
+
+  /**
+   * Fetches the main calendar page to acquire any session cookies
+   * that downstream day-page requests may need.
+   */
+  private async initSession(): Promise<void> {
+    try {
+      const res = await fetch(`${BASE_URL}/daily-calendar`, {
+        headers: this.buildHeaders(BASE_URL),
+        redirect: "follow",
+      });
+      // Extract Set-Cookie headers for subsequent requests
+      const setCookie = res.headers.get("set-cookie");
+      if (setCookie) {
+        this.cookies = setCookie
+          .split(",")
+          .map((c) => c.split(";")[0].trim())
+          .join("; ");
+      }
+    } catch {
+      // Non-fatal — we still attempt day pages without cookies
+    }
+  }
+
+  private buildHeaders(referer?: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Cache-Control": "no-cache",
+    };
+    if (referer) headers["Referer"] = referer;
+    if (this.cookies) headers["Cookie"] = this.cookies;
+    return headers;
   }
 
   private async scrapeDayPage(
@@ -76,14 +131,14 @@ export class CalAcademyScraper extends BaseScraper {
   ): Promise<NormalizedEvent[]> {
     const url = `${BASE_URL}${CALENDAR_PATH}/${dateStr}`;
     const res = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-      },
+      headers: this.buildHeaders(`${BASE_URL}/daily-calendar`),
+      redirect: "follow",
     });
     if (!res.ok) {
-      this.addError(`Calendar page ${dateStr} returned ${res.status}`);
+      this.addError(
+        `Calendar page ${dateStr} returned ${res.status}` +
+        (res.status === 403 ? " (access denied — site may be blocking scrapers)" : "")
+      );
       return [];
     }
 
@@ -91,10 +146,9 @@ export class CalAcademyScraper extends BaseScraper {
     const $ = cheerio.load(html);
     const events: NormalizedEvent[] = [];
 
-    // Events are within the .view-daily-calendar container.
-    // Each event block typically has a time heading, title link, location, description.
-    // We look for links to /events/ paths as event anchors.
-    const $rows = $(".view-content .views-row, .view-content .event-item, .view-content > div");
+    // The Cal Academy daily calendar uses .events-container divs with .event-title
+    // elements inside each block. Fall back to finding event links directly.
+    const $rows = $(".events-container");
 
     if ($rows.length === 0) {
       // Fallback: try to find event links directly
@@ -116,11 +170,11 @@ export class CalAcademyScraper extends BaseScraper {
       try {
         const $row = $(row);
 
-        // Find the event title link
-        const $titleLink = $row.find('a[href*="/events/"]').first();
-        if (!$titleLink.length) return;
+        // Find the event title — use .event-title or fall back to event links
+        const $titleEl = $row.find(".event-title a, a[href*='/events/']").first();
+        if (!$titleEl.length) return;
 
-        const href = $titleLink.attr("href") || "";
+        const href = $titleEl.attr("href") || "";
         const eventPath = href.replace(/^https?:\/\/[^/]+/, "");
 
         // Deduplicate by path + date
@@ -128,22 +182,22 @@ export class CalAcademyScraper extends BaseScraper {
         if (seen.has(eventKey)) return;
         seen.add(eventKey);
 
-        const title = $titleLink.text().trim();
+        const title = $titleEl.text().trim();
         if (!title) return;
 
         // Skip generic museum operations entries
         if (/^museum\s+(opens?|closes?)/i.test(title)) return;
 
-        // Extract time — look for time-like text in headings or time elements
+        // Extract time — look for time-like text anywhere in the container
         const timeText =
-          $row.find("h3, .time, .views-field-field-time, time").first().text().trim() ||
+          $row.find("h3, .event-time, time").first().text().trim() ||
           $row.text().match(/\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?/i)?.[0] ||
           "";
 
         let startTime: Date;
         const parsedTime = parseTime(timeText);
         if (parsedTime) {
-          startTime = new Date(
+          startTime = pacificDate(
             date.getFullYear(),
             date.getMonth(),
             date.getDate(),
@@ -152,7 +206,7 @@ export class CalAcademyScraper extends BaseScraper {
           );
         } else {
           // Default to 10am for events without a specific time
-          startTime = new Date(
+          startTime = pacificDate(
             date.getFullYear(),
             date.getMonth(),
             date.getDate(),
@@ -163,12 +217,12 @@ export class CalAcademyScraper extends BaseScraper {
 
         // Extract location/room
         const location =
-          $row.find(".location, .field-name-field-location").text().trim() ||
+          $row.find(".field-content, .location").first().text().trim() ||
           undefined;
 
         // Extract description
         const description =
-          $row.find("p, .field-name-body, .description").first().text().trim() ||
+          $row.find("p, .description").first().text().trim() ||
           undefined;
 
         // Extract image
@@ -234,8 +288,8 @@ export class CalAcademyScraper extends BaseScraper {
   }
 
   private parseEventFromLink(
-    $: cheerio.CheerioAPI,
-    $link: cheerio.Cheerio<cheerio.Element>,
+    _$: cheerio.CheerioAPI,
+    $link: cheerio.Cheerio<AnyNode>,
     date: Date,
     dateStr: string
   ): NormalizedEvent | null {
@@ -247,7 +301,7 @@ export class CalAcademyScraper extends BaseScraper {
     const sourceEventId = `${eventPath.replace(/^\/events\//, "").replace(/\//g, "-")}::${dateStr}`;
     const eventUrl = href.startsWith("http") ? href : `${BASE_URL}${eventPath}`;
 
-    const startTime = new Date(
+    const startTime = pacificDate(
       date.getFullYear(),
       date.getMonth(),
       date.getDate(),

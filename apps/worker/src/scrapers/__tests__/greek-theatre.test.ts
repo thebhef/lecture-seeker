@@ -1,6 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GreekTheatreScraper } from "../greek-theatre";
 
+/** Extract a Pacific-time component from a Date (works regardless of system TZ). */
+const pacific = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hour12: false,
+});
+function pacificPart(d: Date, type: string): number {
+  const v = parseInt(pacific.formatToParts(d).find((p) => p.type === type)!.value);
+  return type === "hour" && v === 24 ? 0 : v;
+}
+
 const SAMPLE_HTML = `
 <html>
 <body>
@@ -98,15 +109,15 @@ describe("GreekTheatreScraper", () => {
 
     const result = await scraper.scrape();
 
-    // Royel Otis: Show: 7:00 pm
+    // Royel Otis: Show: 7:00 pm Pacific
     const first = result.events[0];
-    expect(first.startTime.getHours()).toBe(19);
-    expect(first.startTime.getMinutes()).toBe(0);
+    expect(pacificPart(first.startTime, "hour")).toBe(19);
+    expect(pacificPart(first.startTime, "minute")).toBe(0);
 
-    // Lewis Capaldi: Show: 7:30 pm
+    // Lewis Capaldi: Show: 7:30 pm Pacific
     const second = result.events[1];
-    expect(second.startTime.getHours()).toBe(19);
-    expect(second.startTime.getMinutes()).toBe(30);
+    expect(pacificPart(second.startTime, "hour")).toBe(19);
+    expect(pacificPart(second.startTime, "minute")).toBe(30);
   });
 
   it("extracts dates correctly", async () => {
@@ -120,13 +131,13 @@ describe("GreekTheatreScraper", () => {
 
     const result = await scraper.scrape();
 
-    // Thu Apr 16
-    expect(result.events[0].startTime.getMonth()).toBe(3); // April
-    expect(result.events[0].startTime.getDate()).toBe(16);
+    // Thu Apr 16 Pacific
+    expect(pacificPart(result.events[0].startTime, "month")).toBe(4); // April (1-based)
+    expect(pacificPart(result.events[0].startTime, "day")).toBe(16);
 
-    // Sun May 03
-    expect(result.events[1].startTime.getMonth()).toBe(4); // May
-    expect(result.events[1].startTime.getDate()).toBe(3);
+    // Sun May 03 Pacific
+    expect(pacificPart(result.events[1].startTime, "month")).toBe(5); // May (1-based)
+    expect(pacificPart(result.events[1].startTime, "day")).toBe(3);
   });
 
   it("extracts ticket URLs", async () => {

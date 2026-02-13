@@ -41,7 +41,7 @@ export function InviteDialog({ eventId, eventTitle, onClose }: InviteDialogProps
   return (
     <>
       <div className="fixed inset-0 z-[60] bg-black/50" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 z-[70] w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background p-6 shadow-xl">
+      <div className="fixed inset-x-4 bottom-4 z-[70] rounded-lg border border-border bg-background p-6 shadow-xl md:inset-x-auto md:bottom-auto md:left-1/2 md:top-1/2 md:w-full md:max-w-md md:-translate-x-1/2 md:-translate-y-1/2">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Email Calendar Invite</h3>
           <button onClick={onClose} className="rounded-md p-1 hover:bg-muted">

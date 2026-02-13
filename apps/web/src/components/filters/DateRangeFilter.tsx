@@ -19,13 +19,13 @@ export function DateRangeFilter({
     <div>
       <h3 className="mb-2 text-sm font-medium flex items-center gap-1.5">
         <CalendarDays className="h-3.5 w-3.5" />
-        Date Range
+        Date &amp; Time Range
       </h3>
       <div className="space-y-2">
         <div>
           <label className="block text-xs text-muted-foreground mb-1">From</label>
           <input
-            type="date"
+            type="datetime-local"
             value={startAfter}
             onChange={(e) => onStartAfterChange(e.target.value)}
             className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
@@ -34,7 +34,7 @@ export function DateRangeFilter({
         <div>
           <label className="block text-xs text-muted-foreground mb-1">To</label>
           <input
-            type="date"
+            type="datetime-local"
             value={startBefore}
             onChange={(e) => onStartBeforeChange(e.target.value)}
             className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"

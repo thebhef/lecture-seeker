@@ -1,14 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CalAcademyScraper } from "../cal-academy";
 
+/** Extract a Pacific-time component from a Date (works regardless of system TZ). */
+const pacific = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hour12: false,
+});
+function pacificPart(d: Date, type: string): number {
+  const v = parseInt(pacific.formatToParts(d).find((p) => p.type === type)!.value);
+  return type === "hour" && v === 24 ? 0 : v;
+}
+
 function makeDayHtml(events: Array<{ time: string; title: string; href: string; location?: string; description?: string }>) {
   const rows = events
     .map(
       (e) => `
-    <div class="views-row">
+    <div class="events-container">
       <h3>${e.time}</h3>
-      <a href="${e.href}">${e.title}</a>
-      <span class="location">${e.location || ""}</span>
+      <div class="event-title"><a href="${e.href}">${e.title}</a></div>
+      <div class="field-content">${e.location || ""}</div>
       <p>${e.description || ""}</p>
     </div>`
     )
@@ -17,7 +28,7 @@ function makeDayHtml(events: Array<{ time: string; title: string; href: string; 
   return `
 <html>
 <body>
-  <div class="view-daily-calendar">
+  <div class="view view-daily-calendar">
     <div class="view-content">
       ${rows}
     </div>
@@ -100,20 +111,20 @@ describe("CalAcademyScraper", () => {
 
     const result = await scraper.scrape();
 
-    // First event on first day: 10:30 a.m.
+    // First event on first day: 10:30 a.m. Pacific
     const planetarium = result.events[0];
-    expect(planetarium.startTime.getHours()).toBe(10);
-    expect(planetarium.startTime.getMinutes()).toBe(30);
+    expect(pacificPart(planetarium.startTime, "hour")).toBe(10);
+    expect(pacificPart(planetarium.startTime, "minute")).toBe(30);
 
-    // Second event: 11:30 a.m.
+    // Second event: 11:30 a.m. Pacific
     const exhibit = result.events[1];
-    expect(exhibit.startTime.getHours()).toBe(11);
-    expect(exhibit.startTime.getMinutes()).toBe(30);
+    expect(pacificPart(exhibit.startTime, "hour")).toBe(11);
+    expect(pacificPart(exhibit.startTime, "minute")).toBe(30);
 
-    // Third event: 1 p.m.
+    // Third event: 1 p.m. Pacific
     const lecture = result.events[2];
-    expect(lecture.startTime.getHours()).toBe(13);
-    expect(lecture.startTime.getMinutes()).toBe(0);
+    expect(pacificPart(lecture.startTime, "hour")).toBe(13);
+    expect(pacificPart(lecture.startTime, "minute")).toBe(0);
   });
 
   it("filters out museum opens/closes", async () => {
@@ -237,7 +248,8 @@ describe("CalAcademyScraper", () => {
       "fetch",
       vi.fn().mockImplementation(() => {
         callCount++;
-        if (callCount <= 2) {
+        // callCount 1 = initSession, 2-3 = first 2 day pages (fail)
+        if (callCount <= 3) {
           return Promise.resolve({ ok: false, status: 500 });
         }
         return Promise.resolve({

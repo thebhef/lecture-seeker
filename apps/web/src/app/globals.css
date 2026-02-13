@@ -35,16 +35,16 @@ body {
  * specific padding/margin values for layout. We restore these here.
  */
 
-/* Theme variables */
+/* Theme variables — use hardcoded colors for Safari < 16.4 compatibility (no color-mix) */
 .calendar-wrapper .fc {
   --fc-border-color: var(--color-border);
   --fc-button-bg-color: var(--color-primary);
   --fc-button-border-color: var(--color-primary);
-  --fc-button-hover-bg-color: color-mix(in srgb, var(--color-primary), black 10%);
-  --fc-button-hover-border-color: color-mix(in srgb, var(--color-primary), black 10%);
-  --fc-button-active-bg-color: color-mix(in srgb, var(--color-primary), black 20%);
-  --fc-button-active-border-color: color-mix(in srgb, var(--color-primary), black 20%);
-  --fc-today-bg-color: color-mix(in srgb, var(--color-primary), transparent 95%);
+  --fc-button-hover-bg-color: #1a46c2;
+  --fc-button-hover-border-color: #1a46c2;
+  --fc-button-active-bg-color: #173ead;
+  --fc-button-active-border-color: #173ead;
+  --fc-today-bg-color: rgba(29, 78, 216, 0.05);
   font-size: 0.875rem;
 }
 
@@ -131,11 +131,24 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1em;
+  flex-wrap: wrap;
+  gap: 0.5em;
 }
 .calendar-wrapper .fc .fc-toolbar-chunk {
   display: flex;
   align-items: center;
   gap: 0.25em;
+}
+
+/* Mobile: stack toolbar and use smaller font */
+@media (max-width: 640px) {
+  .calendar-wrapper .fc .fc-toolbar-title {
+    font-size: 0.95rem;
+  }
+  .calendar-wrapper .fc .fc-button {
+    padding: 0.3em 0.5em;
+    font-size: 0.85em;
+  }
 }
 
 /* FC buttons — restore from Tailwind's button reset */

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { eventQuerySchema, TIME_OF_DAY } from "@lecture-seeker/shared";
+import { eventQuerySchema, DEFAULT_START_HOUR } from "@lecture-seeker/shared";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { page, limit, startAfter, startBefore, source, eventType, location, isOnline, q, timeOfDay } = parsed.data;
+  const { page, limit, startAfter, startBefore, source, eventType, location, isOnline, nights, weekends, q } = parsed.data;
 
   const where: Prisma.EventWhereInput = {};
 
@@ -48,17 +48,27 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  if (timeOfDay) {
-    const bucket = TIME_OF_DAY[timeOfDay];
-    // Filter by hour of day using raw SQL for time-of-day bucketing
-    where.AND = [
-      ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
-      {
-        startTime: {
-          not: undefined,
-        },
-      },
-    ];
+  // Time-of-day and day-of-week filters require raw SQL (Prisma can't EXTRACT).
+  // Get matching IDs first, then add to the Prisma where clause.
+  // Column is timestamptz so a single AT TIME ZONE converts to Pacific local time.
+  if (nights || weekends) {
+    const pacificExpr = `"startTime" AT TIME ZONE 'America/Los_Angeles'`;
+    const conditions: string[] = [];
+    if (nights) {
+      conditions.push(
+        `EXTRACT(HOUR FROM ${pacificExpr}) >= ${DEFAULT_START_HOUR}`
+      );
+    }
+    if (weekends) {
+      // DOW: 0 = Sunday, 6 = Saturday
+      conditions.push(
+        `EXTRACT(DOW FROM ${pacificExpr}) IN (0, 6)`
+      );
+    }
+    const ids = await prisma.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT "id" FROM "Event" WHERE ${conditions.join(" AND ")}`
+    );
+    where.id = { in: ids.map((r) => r.id) };
   }
 
   const [events, total] = await Promise.all([
@@ -72,18 +82,8 @@ export async function GET(request: NextRequest) {
     prisma.event.count({ where }),
   ]);
 
-  // Post-filter for time of day if needed (Prisma doesn't support EXTRACT on DateTime)
-  let filteredEvents = events;
-  if (timeOfDay) {
-    const bucket = TIME_OF_DAY[timeOfDay];
-    filteredEvents = events.filter((e) => {
-      const hour = new Date(e.startTime).getHours();
-      return hour >= bucket.start && hour < bucket.end;
-    });
-  }
-
   return NextResponse.json({
-    data: filteredEvents,
+    data: events,
     pagination: {
       page,
       limit,

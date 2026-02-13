@@ -1,6 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CSMObservatoryScraper } from "../csm-observatory";
 
+/** Extract a Pacific-time component from a Date (works regardless of system TZ). */
+const pacific = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", minute: "2-digit", hour12: false,
+});
+function pacificPart(d: Date, type: string): number {
+  const v = parseInt(pacific.formatToParts(d).find((p) => p.type === type)!.value);
+  return type === "hour" && v === 24 ? 0 : v;
+}
+
 const SAMPLE_HTML = `
 <html>
 <body>
@@ -69,23 +80,23 @@ describe("CSMObservatoryScraper", () => {
     const result = await scraper.scrape();
     const currentYear = new Date().getFullYear();
 
-    // Jan 24, 7:00-9:00PM
+    // Jan 24, 7:00-9:00PM Pacific
     const jan = result.events[0];
-    expect(jan.startTime.getMonth()).toBe(0); // January
-    expect(jan.startTime.getDate()).toBe(24);
-    expect(jan.startTime.getHours()).toBe(19); // 7PM
-    expect(jan.endTime!.getHours()).toBe(21); // 9PM
+    expect(pacificPart(jan.startTime, "month") - 1).toBe(0); // January (Intl month is 1-based)
+    expect(pacificPart(jan.startTime, "day")).toBe(24);
+    expect(pacificPart(jan.startTime, "hour")).toBe(19); // 7PM
+    expect(pacificPart(jan.endTime!, "hour")).toBe(21); // 9PM
 
-    // Mar 21, 8:00-10:00PM
+    // Mar 21, 8:00-10:00PM Pacific
     const mar = result.events[1];
-    expect(mar.startTime.getMonth()).toBe(2); // March
-    expect(mar.startTime.getHours()).toBe(20); // 8PM
-    expect(mar.endTime!.getHours()).toBe(22); // 10PM
+    expect(pacificPart(mar.startTime, "month") - 1).toBe(2); // March
+    expect(pacificPart(mar.startTime, "hour")).toBe(20); // 8PM
+    expect(pacificPart(mar.endTime!, "hour")).toBe(22); // 10PM
 
-    // Apr 25, 8:30-10:30PM
+    // Apr 25, 8:30-10:30PM Pacific
     const apr = result.events[2];
-    expect(apr.startTime.getMinutes()).toBe(30);
-    expect(apr.endTime!.getMinutes()).toBe(30);
+    expect(pacificPart(apr.startTime, "minute")).toBe(30);
+    expect(pacificPart(apr.endTime!, "minute")).toBe(30);
   });
 
   it("skips TBD time entries", async () => {

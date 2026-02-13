@@ -47,10 +47,25 @@ Base class `BaseScraper` with concrete implementations:
 
 Located in: `apps/worker/src/scrapers/`
 
+### Timezone Handling (Important)
+
+All events are Bay Area events. The timezone boundary rules are:
+
+1. **Scrapers (worker)**: HTML scrapers parse local Pacific times from web pages. These **must** be converted to UTC using `pacificDate()` from `apps/worker/src/scrapers/timezone.ts` — never use `new Date(year, month, day, h, m)` directly, because that uses the system timezone (UTC on servers), not Pacific time. API-based scrapers (Stanford, UC Berkeley, Shoreline) receive UTC or timezone-aware ISO strings from their APIs and can use `new Date(isoString)` directly.
+2. **Database**: All `DateTime` fields use `@db.Timestamptz()` (PostgreSQL `timestamptz`), which stores UTC internally. The `Event.timezone` column records the source timezone (default `America/Los_Angeles`) but the `startTime`/`endTime` values themselves are always UTC. Raw SQL can use `"startTime" AT TIME ZONE 'America/Los_Angeles'` directly — no double-conversion needed.
+3. **Frontend (web)**: The browser receives UTC ISO strings from the API. `new Date()` and standard JS date methods automatically convert to the user's local timezone for display. No manual timezone conversion is needed in frontend components.
+4. **ICS generation**: The `ics` library receives explicit UTC DateArrays (`getUTCHours()`, etc.) with `startInputType: "utc"` / `startOutputType: "utc"`. Never use `getHours()` / `getMonth()` — those are system-timezone-dependent and break on non-UTC servers.
+
+**Key rules**:
+- Scraper extracts "7:00 PM" from a Bay Area page → `pacificDate(year, month, day, 19, 0)` (not `new Date(...)`)
+- Raw SQL on timestamptz → single `AT TIME ZONE 'America/Los_Angeles'`
+- Server-side date components → always use `getUTC*()` methods
+- Browser-side date components → standard `get*()` methods are correct (they use user's local TZ)
+
 ### API Routes
 
 Located in `apps/web/src/app/api/`:
-- `GET /api/events` — List/filter events (pagination, date range, type, search, source, time-of-day)
+- `GET /api/events` — List/filter events (pagination, date/time range, type, search, source)
 - `GET /api/events/[id]` — Single event
 - `GET /api/events/[id]/ics` — Download .ics file
 - `POST /api/events/[id]/send-invite` — Email event invite
@@ -137,9 +152,22 @@ Copy `.env.example` to `.env`. Required variables:
 - Shared types imported via `@lecture-seeker/shared` workspace package
 - Path alias `@/` maps to `apps/web/src/` in the web app
 
+### Shared Constants (Important)
+
+**Never hardcode magic numbers that must match across packages.** Any value referenced by more than one file — API limits, default filter values, Zod schema bounds, etc. — must be a named export in `packages/shared/src/constants.ts` and imported wherever used. This prevents silent mismatches (e.g., a frontend sending `limit=500` that the Zod schema rejects at `max(200)`).
+
+Current shared constants include:
+- `API_DEFAULT_LIMIT`, `API_MAX_LIMIT`, `API_CALENDAR_LIMIT` — pagination limits used by the Zod schema, API route, and frontend
+- `DEFAULT_START_HOUR` — default filter start hour, used by the events page and FilterSidebar
+- `SOURCE_SLUGS` — canonical source identifiers
+- `EVENT_TYPES` — canonical event type map
+
+When adding a new constant: export it from `constants.ts`, import via `@lecture-seeker/shared`, and reference the constant in tests too (not the raw number).
+
 ### Validation
 
 - **Zod** schemas for runtime validation of API inputs (`packages/shared/src/schemas.ts`)
+- Zod schema bounds (e.g., `max(API_MAX_LIMIT)`) reference shared constants — update the constant, not the schema literal
 - Prisma-generated types for database models
 - API routes validate query params/body with Zod and return 400 with details on failure
 
