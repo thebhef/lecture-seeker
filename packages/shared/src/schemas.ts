@@ -1,8 +1,10 @@
 import { z } from "zod";
 
+export const EVENT_QUERY_MAX_LIMIT = 1000;
+
 export const eventQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().min(1).max(200).default(50),
+  limit: z.coerce.number().int().min(1).max(EVENT_QUERY_MAX_LIMIT).default(50),
   startAfter: z.coerce.date().optional(),
   startBefore: z.coerce.date().optional(),
   source: z.string().optional(),

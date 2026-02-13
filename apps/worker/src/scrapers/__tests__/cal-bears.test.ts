@@ -127,4 +127,61 @@ describe("CalBearsScraper", () => {
     const result = await s.scrape();
     expect(result.events[0].subjects).toContain(expected);
   });
+
+  it("handles network failures gracefully", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValueOnce(new Error("Connection refused"))
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("returns empty subjects when sport is not recognized", async () => {
+    const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:test@test\r\nDTSTART:20260401T190000Z\r\nSUMMARY:California Quidditch Exhibition\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(ics),
+      })
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events[0].subjects).toEqual([]);
+  });
+
+  it("always sets eventType to 'sports'", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(MINIMAL_ICS),
+      })
+    );
+
+    const result = await scraper.scrape();
+    for (const event of result.events) {
+      expect(event.eventType).toBe("sports");
+    }
+  });
+
+  it("unescapes \\n in descriptions", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(MINIMAL_ICS),
+      })
+    );
+
+    const result = await scraper.scrape();
+    const basketball = result.events[0];
+    // The description should have real newlines, not escaped \\n
+    expect(basketball.description).not.toContain("\\n");
+    expect(basketball.description).toContain("\n");
+  });
 });

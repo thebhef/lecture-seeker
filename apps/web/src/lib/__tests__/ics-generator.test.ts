@@ -109,4 +109,27 @@ describe("generateIcs", () => {
     expect(ics).toContain("BEGIN:VEVENT");
     expect(ics).toContain("END:VEVENT");
   });
+
+  it("includes URL when provided", () => {
+    const ics = generateIcs(makeEvent({ url: "https://example.com/event" }));
+    expect(ics).toContain("https://example.com/event");
+  });
+
+  it("includes PRODID in the calendar header", () => {
+    const ics = generateIcs(makeEvent());
+    expect(ics).toContain("PRODID:");
+  });
+
+  it("includes VERSION:2.0 header", () => {
+    const ics = generateIcs(makeEvent());
+    expect(ics).toContain("VERSION:2.0");
+  });
+
+  it("generates different UIDs for different event IDs", () => {
+    const ics1 = generateIcs(makeEvent({ id: "event-aaa" }));
+    const ics2 = generateIcs(makeEvent({ id: "event-bbb" }));
+    expect(ics1).toContain("event-aaa@lectureseeker");
+    expect(ics2).toContain("event-bbb@lectureseeker");
+    expect(ics1).not.toContain("event-bbb@lectureseeker");
+  });
 });
