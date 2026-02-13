@@ -22,7 +22,6 @@ const CalendarView = dynamic(
     ),
   }
 );
-import { EVENT_QUERY_MAX_LIMIT } from "@lecture-seeker/shared";
 import type { EventWithSource } from "@/lib/types";
 
 interface PaginatedResponse {
@@ -47,7 +46,7 @@ function EventsContent() {
     try {
       const params = new URLSearchParams(searchParams.toString());
       if (!params.has("limit")) {
-        params.set("limit", viewMode === "calendar" ? String(EVENT_QUERY_MAX_LIMIT) : "50");
+        params.set("limit", viewMode === "calendar" ? "500" : "50");
       }
       // Default to upcoming events (now through 1 year out) when no date filter is set
       if (!params.has("startAfter") && !params.has("startBefore")) {

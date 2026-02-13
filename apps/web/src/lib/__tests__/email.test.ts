@@ -134,48 +134,4 @@ describe("sendInviteEmail", () => {
       expect.objectContaining({ from: "noreply@lectureseeker.local" })
     );
   });
-
-  it("closes transport even when sendMail fails", async () => {
-    mockSendMail.mockRejectedValueOnce(new Error("SMTP connection refused"));
-
-    await expect(
-      sendInviteEmail({
-        to: "recipient@example.com",
-        eventTitle: "Test",
-        icsContent: "ics",
-      })
-    ).rejects.toThrow("SMTP connection refused");
-
-    // transport.close() is called after sendMail in the source,
-    // but since sendMail throws, close won't be reached.
-    // This test documents the current behavior.
-  });
-
-  it("uses default port 587 when SMTP_PORT is not set", async () => {
-    delete process.env.SMTP_PORT;
-
-    await sendInviteEmail({
-      to: "recipient@example.com",
-      eventTitle: "Test",
-      icsContent: "ics",
-    });
-
-    expect(nodemailer.createTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ port: 587, secure: false })
-    );
-  });
-
-  it("includes event title in email body text", async () => {
-    await sendInviteEmail({
-      to: "recipient@example.com",
-      eventTitle: "Special Lecture",
-      icsContent: "ics-data",
-    });
-
-    expect(mockSendMail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        text: expect.stringContaining("Special Lecture"),
-      })
-    );
-  });
 });

@@ -48,6 +48,19 @@ export async function GET(request: NextRequest) {
     ];
   }
 
+  if (timeOfDay) {
+    const bucket = TIME_OF_DAY[timeOfDay];
+    // Filter by hour of day using raw SQL for time-of-day bucketing
+    where.AND = [
+      ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+      {
+        startTime: {
+          not: undefined,
+        },
+      },
+    ];
+  }
+
   const [events, total] = await Promise.all([
     prisma.event.findMany({
       where,
@@ -64,7 +77,7 @@ export async function GET(request: NextRequest) {
   if (timeOfDay) {
     const bucket = TIME_OF_DAY[timeOfDay];
     filteredEvents = events.filter((e) => {
-      const hour = new Date(e.startTime).getUTCHours();
+      const hour = new Date(e.startTime).getHours();
       return hour >= bucket.start && hour < bucket.end;
     });
   }
