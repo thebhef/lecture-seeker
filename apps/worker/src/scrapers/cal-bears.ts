@@ -76,6 +76,7 @@ export class CalBearsScraper extends BaseScraper {
       isCanceled: false,
       isOnline: false,
       eventType: "sports",
+      audience: "public",
       subjects: sport ? [sport] : [],
       rawData: { uid, summary, location: vevent.location, start: vevent.start, end: vevent.end },
     };

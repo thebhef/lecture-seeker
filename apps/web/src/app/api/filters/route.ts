@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const [eventTypes, sources, locations] = await Promise.all([
+  const [eventTypes, sources, locations, audiences] = await Promise.all([
     prisma.event.findMany({
       where: { eventType: { not: null } },
       select: { eventType: true },
@@ -21,6 +21,12 @@ export async function GET() {
       orderBy: { location: "asc" },
       take: 100,
     }),
+    prisma.event.findMany({
+      where: { audience: { not: null } },
+      select: { audience: true },
+      distinct: ["audience"],
+      orderBy: { audience: "asc" },
+    }),
   ]);
 
   return NextResponse.json({
@@ -30,6 +36,9 @@ export async function GET() {
     sources: sources.map((s) => ({ slug: s.slug, name: s.name })),
     locations: locations
       .map((e) => e.location)
+      .filter(Boolean) as string[],
+    audiences: audiences
+      .map((e) => e.audience)
       .filter(Boolean) as string[],
   });
 }

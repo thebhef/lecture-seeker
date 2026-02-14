@@ -190,6 +190,7 @@ export class ShorelineAmphitheatreScraper extends BaseScraper {
       isCanceled: e.status_code === "cancelled",
       isOnline: e.is_virtual ?? false,
       eventType: mapSegmentToEventType(e.segment, e.genre),
+      audience: "public",
       subjects,
       rawData: e,
     };

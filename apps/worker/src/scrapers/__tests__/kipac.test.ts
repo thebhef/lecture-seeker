@@ -75,6 +75,7 @@ describe("KipacScraper", () => {
     expect(event.department).toBe("KIPAC");
     expect(event.subjects).toEqual([]);
     expect(event.rawData).toBeDefined();
+    expect(event.audience).toBe("academic");
   });
 
   it("skips events with status false", async () => {

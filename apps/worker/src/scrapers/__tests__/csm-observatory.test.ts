@@ -66,6 +66,7 @@ describe("CSMObservatoryScraper", () => {
     expect(jan.isOnline).toBe(false);
     expect(jan.isCanceled).toBe(false);
     expect(jan.sourceEventId).toMatch(/^csm-jazz-/);
+    expect(jan.audience).toBe("public");
   });
 
   it("parses time ranges correctly", async () => {

@@ -164,6 +164,7 @@ export class ComputerHistoryMuseumScraper extends BaseScraper {
       isCanceled: false,
       isOnline: false,
       eventType,
+      audience: "public",
       subjects: [],
       rawData: { slug, dateTimeText, url },
     };

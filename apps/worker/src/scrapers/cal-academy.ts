@@ -276,6 +276,7 @@ export class CalAcademyScraper extends BaseScraper {
           isCanceled: false,
           isOnline: false,
           eventType,
+          audience: "public",
           subjects,
           rawData: { dateStr, timeText, href, location },
         });
@@ -322,6 +323,7 @@ export class CalAcademyScraper extends BaseScraper {
       url: eventUrl,
       isCanceled: false,
       isOnline: false,
+      audience: "public",
       subjects: [],
       rawData: { dateStr, href },
     };

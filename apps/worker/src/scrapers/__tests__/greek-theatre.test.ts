@@ -93,6 +93,7 @@ describe("GreekTheatreScraper", () => {
     expect(first.eventType).toBe("concert");
     expect(first.isOnline).toBe(false);
     expect(first.isCanceled).toBe(false);
+    expect(first.audience).toBe("public");
     expect(first.url).toBe(
       "https://thegreekberkeley.com/events/royel-otis-260416"
     );

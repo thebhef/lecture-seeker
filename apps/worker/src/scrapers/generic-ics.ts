@@ -1,5 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
+import { inferAudienceFromText } from "@lecture-seeker/shared";
 import ical from "node-ical";
 
 export class GenericIcsScraper extends BaseScraper {
@@ -63,13 +64,19 @@ export class GenericIcsScraper extends BaseScraper {
       ? vevent.url
       : (vevent.url as unknown as { val?: string })?.val || undefined;
 
+    const description =
+      typeof vevent.description === "string"
+        ? vevent.description.replace(/\\n/g, "\n").trim()
+        : undefined;
+
+    const audience = inferAudienceFromText(
+      `${vevent.summary || ""} ${description || ""}`
+    );
+
     return {
       sourceEventId: uid,
       title: vevent.summary || "Untitled Event",
-      description:
-        typeof vevent.description === "string"
-          ? vevent.description.replace(/\\n/g, "\n").trim()
-          : undefined,
+      description,
       startTime,
       endTime,
       isAllDay: false,
@@ -78,6 +85,7 @@ export class GenericIcsScraper extends BaseScraper {
       url,
       isCanceled: false,
       isOnline: false,
+      audience,
       subjects: [],
       rawData: { uid, summary: vevent.summary },
     };

@@ -98,6 +98,7 @@ describe("ComputerHistoryMuseumScraper", () => {
     expect(event.isOnline).toBe(false);
     expect(event.subjects).toEqual([]);
     expect(event.rawData).toBeDefined();
+    expect(event.audience).toBe("public");
   });
 
   it("parses date and time correctly", async () => {

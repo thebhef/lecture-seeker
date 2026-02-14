@@ -33,15 +33,22 @@ describe("eventQuerySchema", () => {
 
   it("parses optional string filters", () => {
     const result = eventQuerySchema.parse({
-      source: "stanford",
+      sources: "stanford",
       eventType: "lecture",
+      audience: "public",
       location: "Room 101",
       q: "astronomy",
     });
-    expect(result.source).toBe("stanford");
+    expect(result.sources).toBe("stanford");
     expect(result.eventType).toBe("lecture");
+    expect(result.audience).toBe("public");
     expect(result.location).toBe("Room 101");
     expect(result.q).toBe("astronomy");
+  });
+
+  it("accepts comma-separated sources", () => {
+    const result = eventQuerySchema.parse({ sources: "stanford,uc-berkeley" });
+    expect(result.sources).toBe("stanford,uc-berkeley");
   });
 
   it("transforms isOnline string to boolean", () => {
@@ -54,8 +61,9 @@ describe("eventQuerySchema", () => {
 
   it("leaves optional fields undefined when not provided", () => {
     const result = eventQuerySchema.parse({});
-    expect(result.source).toBeUndefined();
+    expect(result.sources).toBeUndefined();
     expect(result.eventType).toBeUndefined();
+    expect(result.audience).toBeUndefined();
     expect(result.q).toBeUndefined();
     expect(result.isOnline).toBeUndefined();
   });

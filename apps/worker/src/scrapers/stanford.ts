@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType, normalizeAudience } from "@lecture-seeker/shared";
 
 interface StanfordApiResponse {
   events: StanfordEvent[];
@@ -88,7 +88,7 @@ export class StanfordScraper extends BaseScraper {
 
     const eventType =
       normalizeEventType(e.filters?.event_types?.[0]?.name);
-    const audience = e.filters?.event_audience?.[0]?.name || undefined;
+    const audience = normalizeAudience(e.filters?.event_audience?.[0]?.name);
     const subjects =
       e.filters?.event_subject?.map((s) => s.name) || [];
     const department = e.departments?.[0]?.name || undefined;

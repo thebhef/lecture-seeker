@@ -85,7 +85,7 @@ describe("StanfordScraper", () => {
     expect(event.isCanceled).toBe(false);
     expect(event.isOnline).toBe(false);
     expect(event.eventType).toBe("lecture");
-    expect(event.audience).toBe("General Public");
+    expect(event.audience).toBe("public");
     expect(event.subjects).toEqual(["Computer Science", "AI"]);
     expect(event.department).toBe("CS Department");
     expect(event.timezone).toBe("America/Los_Angeles");

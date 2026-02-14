@@ -62,6 +62,7 @@ describe("CalBearsScraper", () => {
     expect(basketball.url).toBe("https://calbears.com/game/123");
     expect(basketball.description).toContain("Big game rivalry");
     expect(basketball.description).toContain("\n");
+    expect(basketball.audience).toBe("public");
 
     const baseball = result.events[1];
     expect(baseball.title).toBe("California Baseball vs UCLA");

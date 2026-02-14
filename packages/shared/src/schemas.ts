@@ -6,8 +6,9 @@ export const eventQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(API_MAX_LIMIT).default(API_DEFAULT_LIMIT),
   startAfter: z.coerce.date().optional(),
   startBefore: z.coerce.date().optional(),
-  source: z.string().optional(),
+  sources: z.string().optional(),
   eventType: z.string().optional(),
+  audience: z.string().optional(),
   location: z.string().optional(),
   isOnline: z
     .enum(["true", "false"])

@@ -67,5 +67,6 @@ model Event {
   @@index([startTime])
   @@index([sourceId])
   @@index([eventType])
+  @@index([audience])
   @@index([location])
 }

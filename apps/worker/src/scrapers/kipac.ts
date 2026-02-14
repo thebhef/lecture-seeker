@@ -95,6 +95,7 @@ export class KipacScraper extends BaseScraper {
       isCanceled: false,
       isOnline,
       eventType: inferEventType(attributes.title),
+      audience: "academic",
       department: "KIPAC",
       subjects: [],
       rawData: item,

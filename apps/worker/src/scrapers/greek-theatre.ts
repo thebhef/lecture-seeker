@@ -211,6 +211,7 @@ export class GreekTheatreScraper extends BaseScraper {
           isCanceled: false,
           isOnline: false,
           eventType: "concert",
+          audience: "public",
           subjects,
           rawData: {
             eventSlug,

@@ -98,6 +98,7 @@ describe("CalAcademyScraper", () => {
     // Each day produces 3 events (planetarium, exhibit tour, lecture)
     expect(result.events.length).toBe(3 * 30);
     expect(result.errors).toHaveLength(0);
+    expect(result.events[0].audience).toBe("public");
   });
 
   it("parses time correctly", async () => {

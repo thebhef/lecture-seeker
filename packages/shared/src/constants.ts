@@ -153,3 +153,80 @@ export function normalizeEventType(
   if (lower in EVENT_TYPE_ALIASES) return EVENT_TYPE_ALIASES[lower];
   return undefined;
 }
+
+// ── Audience types ──────────────────────────────────────────────────
+export const AUDIENCE_TYPES: Record<string, string> = {
+  public: "General Public",
+  students: "Students",
+  faculty: "Faculty & Staff",
+  academic: "Academic Community",
+};
+
+// Maps variant strings to canonical audience type keys
+const AUDIENCE_ALIASES: Record<string, string> = {
+  // public variants
+  "general public": "public",
+  "open to the public": "public",
+  "open to public": "public",
+  "all ages": "public",
+  community: "public",
+  general: "public",
+  everyone: "public",
+  "free and open to the public": "public",
+  // students variants
+  student: "students",
+  undergraduate: "students",
+  graduate: "students",
+  "graduate students": "students",
+  "undergraduate students": "students",
+  // faculty variants
+  staff: "faculty",
+  "faculty/staff": "faculty",
+  "faculty and staff": "faculty",
+  employees: "faculty",
+  // academic variants
+  researchers: "academic",
+  scholars: "academic",
+  "academic community": "academic",
+  "research community": "academic",
+  "faculty and students": "academic",
+};
+
+/**
+ * Normalizes an audience string to a canonical AUDIENCE_TYPES key.
+ * Returns the canonical key if recognized, or undefined if the input
+ * doesn't match any known audience type or alias.
+ */
+export function normalizeAudience(
+  raw: string | undefined | null
+): string | undefined {
+  if (!raw) return undefined;
+  const lower = raw.trim().toLowerCase();
+  if (lower in AUDIENCE_TYPES) return lower;
+  if (lower in AUDIENCE_ALIASES) return AUDIENCE_ALIASES[lower];
+  return undefined;
+}
+
+/**
+ * Infers audience from text content (title + description) using keyword matching.
+ * Returns a canonical audience key or undefined.
+ */
+export function inferAudienceFromText(
+  text: string | undefined | null
+): string | undefined {
+  if (!text) return undefined;
+  const lower = text.toLowerCase();
+  if (/\b(thesis defense|dissertation|colloqui|seminar series|research talk|tea talk)\b/.test(lower)) {
+    return "academic";
+  }
+  if (/\b(for students|student only|student event|undergraduate workshop|graduate student)\b/.test(lower)) {
+    return "students";
+  }
+  if (/\b(faculty meeting|staff only|for faculty|employee)\b/.test(lower)) {
+    return "faculty";
+  }
+  if (/\b(open to the public|general public|all ages|free public|community event|public event)\b/.test(lower)) {
+    return "public";
+  }
+  return undefined;
+}

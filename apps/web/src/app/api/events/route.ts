@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { page, limit, startAfter, startBefore, source, eventType, location, isOnline, nights, weekends, q } = parsed.data;
+  const { page, limit, startAfter, startBefore, sources, eventType, audience, location, isOnline, nights, weekends, q } = parsed.data;
 
   const where: Prisma.EventWhereInput = {};
 
@@ -24,12 +24,21 @@ export async function GET(request: NextRequest) {
     if (startBefore) where.startTime.lte = startBefore;
   }
 
-  if (source) {
-    where.source = { slug: source };
+  if (sources) {
+    const slugList = sources.split(",").map((s) => s.trim()).filter(Boolean);
+    if (slugList.length === 1) {
+      where.source = { slug: slugList[0] };
+    } else if (slugList.length > 1) {
+      where.source = { slug: { in: slugList } };
+    }
   }
 
   if (eventType) {
     where.eventType = eventType;
+  }
+
+  if (audience) {
+    where.audience = audience;
   }
 
   if (location) {

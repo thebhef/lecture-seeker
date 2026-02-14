@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { SearchBar } from "./SearchBar";
 import { SourceFilter } from "./SourceFilter";
 import { EventTypeFilter } from "./EventTypeFilter";
+import { AudienceFilter } from "./AudienceFilter";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { QuickFilters } from "./QuickFilters";
 import { X, SlidersHorizontal } from "lucide-react";
@@ -14,6 +15,7 @@ interface FilterData {
   eventTypes: string[];
   sources: { slug: string; name: string }[];
   locations: string[];
+  audiences: string[];
 }
 
 export function FilterSidebar() {
@@ -75,8 +77,9 @@ export function FilterSidebar() {
 
   const hasFilters =
     searchParams.has("q") ||
-    searchParams.has("source") ||
+    searchParams.has("sources") ||
     searchParams.has("eventType") ||
+    searchParams.has("audience") ||
     searchParams.has("location") ||
     searchParams.has("startAfter") ||
     searchParams.has("startBefore") ||
@@ -85,8 +88,9 @@ export function FilterSidebar() {
 
   const activeFilterCount = [
     searchParams.get("q"),
-    searchParams.get("source"),
+    searchParams.get("sources"),
     searchParams.get("eventType"),
+    searchParams.get("audience"),
     searchParams.get("startAfter"),
     searchParams.get("startBefore"),
     searchParams.get("nights"),
@@ -146,14 +150,26 @@ export function FilterSidebar() {
         <>
           <SourceFilter
             sources={filters.sources}
-            selected={searchParams.get("source") || ""}
-            onChange={(v) => updateParam("source", v || null)}
+            selected={
+              searchParams.get("sources")
+                ? searchParams.get("sources")!.split(",").filter(Boolean)
+                : []
+            }
+            onChange={(slugs) =>
+              updateParam("sources", slugs.length > 0 ? slugs.join(",") : null)
+            }
           />
 
           <EventTypeFilter
             types={filters.eventTypes}
             selected={searchParams.get("eventType") || ""}
             onChange={(v) => updateParam("eventType", v || null)}
+          />
+
+          <AudienceFilter
+            audiences={filters.audiences}
+            selected={searchParams.get("audience") || ""}
+            onChange={(v) => updateParam("audience", v || null)}
           />
         </>
       )}

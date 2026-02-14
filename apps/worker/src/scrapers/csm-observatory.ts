@@ -62,6 +62,7 @@ export class CSMObservatoryScraper extends BaseScraper {
             isCanceled: false,
             isOnline: false,
             eventType: "astronomy",
+            audience: "public",
             subjects: ["astronomy", "jazz", "stargazing"],
             rawData: { dateText, timeText },
           });

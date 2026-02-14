@@ -58,6 +58,7 @@ describe("UCBerkeleyScraper", () => {
     expect(event.isAllDay).toBe(false);
     expect(event.isCanceled).toBe(false);
     expect(event.isOnline).toBe(false);
+    expect(event.audience).toBeUndefined();
   });
 
   it("parses pipe-separated title into eventType and title", async () => {

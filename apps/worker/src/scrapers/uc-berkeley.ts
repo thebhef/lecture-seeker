@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType, inferAudienceFromText } from "@lecture-seeker/shared";
 
 interface BerkeleyApiResponse {
   meta: { total_pages: number; page: number };
@@ -92,6 +92,9 @@ export class UCBerkeleyScraper extends BaseScraper {
     }
 
     const endIso = event.date2_utc || event.date2_iso;
+    const audience = inferAudienceFromText(
+      `${title} ${event.summary || ""} ${event.description || ""}`
+    );
 
     return {
       sourceEventId: String(event.id),
@@ -108,6 +111,7 @@ export class UCBerkeleyScraper extends BaseScraper {
       isCanceled: event.is_canceled === 1,
       isOnline: event.is_online === 1,
       eventType,
+      audience,
       subjects: [],
       rawData: event,
     };
