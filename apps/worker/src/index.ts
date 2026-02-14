@@ -8,6 +8,8 @@ import { CSMObservatoryScraper } from "./scrapers/csm-observatory";
 import { ShorelineAmphitheatreScraper } from "./scrapers/shoreline-amphitheatre";
 import { GreekTheatreScraper } from "./scrapers/greek-theatre";
 import { CalAcademyScraper } from "./scrapers/cal-academy";
+import { ComputerHistoryMuseumScraper } from "./scrapers/computer-history-museum";
+import { KipacScraper } from "./scrapers/kipac";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
 import { BUILT_IN_SOURCES } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
@@ -30,6 +32,10 @@ function getScraperForSource(source: Source): BaseScraper {
       return new GreekTheatreScraper();
     case "cal-academy":
       return new CalAcademyScraper();
+    case "computer-history-museum":
+      return new ComputerHistoryMuseumScraper();
+    case "kipac":
+      return new KipacScraper();
     default:
       if (source.type === "ICS_FEED") {
         return new GenericIcsScraper(source.slug, source.url);

@@ -15,6 +15,8 @@ export const SOURCE_SLUGS = {
   SHORELINE_AMPHITHEATRE: "shoreline-amphitheatre",
   GREEK_THEATRE: "greek-theatre",
   CAL_ACADEMY: "cal-academy",
+  COMPUTER_HISTORY_MUSEUM: "computer-history-museum",
+  KIPAC: "kipac",
 } as const;
 
 export const BUILT_IN_SOURCES = [
@@ -59,6 +61,18 @@ export const BUILT_IN_SOURCES = [
     slug: SOURCE_SLUGS.CAL_ACADEMY,
     type: "HTML_SCRAPE" as const,
     url: "https://www.calacademy.org/daily-calendar",
+  },
+  {
+    name: "Computer History Museum",
+    slug: SOURCE_SLUGS.COMPUTER_HISTORY_MUSEUM,
+    type: "HTML_SCRAPE" as const,
+    url: "https://computerhistory.org/events/",
+  },
+  {
+    name: "KIPAC Stanford",
+    slug: SOURCE_SLUGS.KIPAC,
+    type: "API_JSON" as const,
+    url: "https://kipac.stanford.edu/jsonapi/node/stanford_event",
   },
 ];
 
