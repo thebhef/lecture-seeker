@@ -149,6 +149,15 @@ describe("UCBerkeleyScraper", () => {
     expect(result.events[0].description).toBe("Short summary");
   });
 
+  it("converts numeric cost to string", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSuccess([mockBerkeleyEvent({ cost: 42 })])
+    );
+    const result = await scraper.scrape();
+    expect(result.events[0].cost).toBe("42");
+  });
+
   it("falls back to date_iso when date_utc is missing", async () => {
     vi.stubGlobal(
       "fetch",

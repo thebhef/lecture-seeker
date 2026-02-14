@@ -22,7 +22,7 @@ interface BerkeleyEvent {
   is_canceled?: number;
   is_online?: number;
   online_url?: string;
-  cost?: string;
+  cost?: string | number;
   timezone?: string;
   location?: string;
   summary?: string;
@@ -104,7 +104,7 @@ export class UCBerkeleyScraper extends BaseScraper {
       location: event.location || undefined,
       url: event.url || undefined,
       ticketUrl: event.online_url || undefined,
-      cost: event.cost || undefined,
+      cost: event.cost != null ? String(event.cost) : undefined,
       isCanceled: event.is_canceled === 1,
       isOnline: event.is_online === 1,
       eventType,
