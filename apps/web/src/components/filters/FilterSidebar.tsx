@@ -34,7 +34,7 @@ export function FilterSidebar() {
   const updateParam = useCallback(
     (key: string, value: string | null) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value) {
+      if (value !== null) {
         params.set(key, value);
       } else {
         params.delete(key);
@@ -151,25 +151,58 @@ export function FilterSidebar() {
           <SourceFilter
             sources={filters.sources}
             selected={
-              searchParams.get("sources")
+              searchParams.has("sources")
                 ? searchParams.get("sources")!.split(",").filter(Boolean)
-                : []
+                : filters.sources.map((s) => s.slug)
             }
             onChange={(slugs) =>
-              updateParam("sources", slugs.length > 0 ? slugs.join(",") : null)
+              updateParam(
+                "sources",
+                slugs.length === filters.sources.length
+                  ? null
+                  : slugs.length > 0
+                    ? slugs.join(",")
+                    : ""
+              )
             }
           />
 
           <EventTypeFilter
             types={filters.eventTypes}
-            selected={searchParams.get("eventType") || ""}
-            onChange={(v) => updateParam("eventType", v || null)}
+            selected={
+              searchParams.has("eventType")
+                ? searchParams.get("eventType")!.split(",").filter(Boolean)
+                : [...filters.eventTypes]
+            }
+            onChange={(types) =>
+              updateParam(
+                "eventType",
+                types.length === filters.eventTypes.length
+                  ? null
+                  : types.length > 0
+                    ? types.join(",")
+                    : ""
+              )
+            }
           />
 
           <AudienceFilter
             audiences={filters.audiences}
-            selected={searchParams.get("audience") || ""}
-            onChange={(v) => updateParam("audience", v || null)}
+            selected={
+              searchParams.has("audience")
+                ? searchParams.get("audience")!.split(",").filter(Boolean)
+                : [...filters.audiences]
+            }
+            onChange={(audiences) =>
+              updateParam(
+                "audience",
+                audiences.length === filters.audiences.length
+                  ? null
+                  : audiences.length > 0
+                    ? audiences.join(",")
+                    : ""
+              )
+            }
           />
         </>
       )}

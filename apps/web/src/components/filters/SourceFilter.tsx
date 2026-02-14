@@ -7,25 +7,26 @@ interface SourceFilterProps {
 }
 
 export function SourceFilter({ sources, selected, onChange }: SourceFilterProps) {
-  const allSelected = selected.length === 0;
+  const allSelected = selected.length === sources.length;
 
   function toggleSource(slug: string) {
-    if (allSelected) {
-      // Going from "all" to "all except this one"
-      onChange(sources.filter((s) => s.slug !== slug).map((s) => s.slug));
-    } else if (selected.includes(slug)) {
-      const next = selected.filter((s) => s !== slug);
-      // If removing the last one, go back to "all"
-      onChange(next.length === 0 ? [] : next);
+    if (selected.includes(slug)) {
+      onChange(selected.filter((s) => s !== slug));
     } else {
-      const next = [...selected, slug];
-      // If all sources are now selected, clear to mean "all"
-      onChange(next.length === sources.length ? [] : next);
+      onChange([...selected, slug]);
     }
   }
 
   function toggleAll() {
-    onChange([]);
+    if (allSelected) {
+      onChange([]);
+    } else {
+      onChange(sources.map((s) => s.slug));
+    }
+  }
+
+  function selectOnly(slug: string) {
+    onChange([slug]);
   }
 
   return (
@@ -44,22 +45,30 @@ export function SourceFilter({ sources, selected, onChange }: SourceFilterProps)
           </span>
         </label>
         {sources.map((s) => {
-          const isChecked = allSelected || selected.includes(s.slug);
+          const isChecked = selected.includes(s.slug);
           return (
-            <label
+            <div
               key={s.slug}
-              className="flex items-center gap-2 rounded px-2 py-1 text-sm cursor-pointer hover:bg-muted"
+              className="group flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted"
             >
-              <input
-                type="checkbox"
-                checked={isChecked}
-                onChange={() => toggleSource(s.slug)}
-                className="h-4 w-4 rounded border-border accent-primary"
-              />
-              <span className={isChecked && !allSelected ? "text-primary font-medium" : "text-muted-foreground"}>
-                {s.name}
-              </span>
-            </label>
+              <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => toggleSource(s.slug)}
+                  className="h-4 w-4 shrink-0 rounded border-border accent-primary"
+                />
+                <span className={`truncate ${isChecked ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                  {s.name}
+                </span>
+              </label>
+              <button
+                onClick={() => selectOnly(s.slug)}
+                className="hidden shrink-0 text-xs text-muted-foreground hover:text-primary group-hover:block"
+              >
+                only
+              </button>
+            </div>
           );
         })}
       </div>

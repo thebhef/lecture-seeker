@@ -34,11 +34,21 @@ export async function GET(request: NextRequest) {
   }
 
   if (eventType) {
-    where.eventType = eventType;
+    const typeList = eventType.split(",").map((s) => s.trim()).filter(Boolean);
+    if (typeList.length === 1) {
+      where.eventType = typeList[0];
+    } else if (typeList.length > 1) {
+      where.eventType = { in: typeList };
+    }
   }
 
   if (audience) {
-    where.audience = audience;
+    const audienceList = audience.split(",").map((s) => s.trim()).filter(Boolean);
+    if (audienceList.length === 1) {
+      where.audience = audienceList[0];
+    } else if (audienceList.length > 1) {
+      where.audience = { in: audienceList };
+    }
   }
 
   if (location) {
