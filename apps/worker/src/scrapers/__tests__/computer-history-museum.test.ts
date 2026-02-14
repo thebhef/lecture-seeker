@@ -122,6 +122,41 @@ describe("ComputerHistoryMuseumScraper", () => {
     expect(pacificPart(event.startTime, "minute")).toBe(0);
   });
 
+  it("parses date/time when date and time are in separate elements", async () => {
+    const listingHtml = makeListingHtml(["test-event"]);
+    // Real CHM pages have date and time in separate elements,
+    // so Cheerio .text() concatenates them without whitespace
+    const detailHtml = `<html>
+<head>
+  <meta property="og:title" content="Test Event - CHM">
+  <meta property="og:image" content="https://computerhistory.org/img/test.jpg">
+  <meta property="og:description" content="A test event.">
+</head>
+<body>
+  <h1>Test Event</h1>
+  <div class="date"><span>Mar 11, 2026</span><span>7:00 pm</span></div>
+</body>
+</html>`;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn()
+        .mockResolvedValueOnce({ ok: true, text: () => Promise.resolve(listingHtml) })
+        .mockResolvedValueOnce({ ok: true, text: () => Promise.resolve(detailHtml) })
+    );
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(1);
+    expect(result.errors).toHaveLength(0);
+
+    const event = result.events[0];
+    expect(pacificPart(event.startTime, "year")).toBe(2026);
+    expect(pacificPart(event.startTime, "month")).toBe(3);
+    expect(pacificPart(event.startTime, "day")).toBe(11);
+    expect(pacificPart(event.startTime, "hour")).toBe(19);
+    expect(pacificPart(event.startTime, "minute")).toBe(0);
+  });
+
   it("parses date/time with end time", async () => {
     const listingHtml = makeListingHtml(["test-event"]);
     const detailHtml = makeDetailHtml({ dateTime: "April 5, 2026 6:30 pm – 8:00 pm" });

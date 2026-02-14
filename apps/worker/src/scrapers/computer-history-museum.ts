@@ -23,7 +23,7 @@ const MONTHS: Record<string, number> = {
 function parseDateTime(text: string): { start: Date; end?: Date } | null {
   // Match "Month Day, Year" with optional time(s)
   const match = text.match(
-    /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s+(\d{1,2}(?::\d{2})?\s*[ap]m)(?:\s*[–\-—]\s*(\d{1,2}(?::\d{2})?\s*[ap]m))?/i
+    /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s*(\d{1,2}(?::\d{2})?\s*[ap]m)(?:\s*[–\-—]\s*(\d{1,2}(?::\d{2})?\s*[ap]m))?/i
   );
   if (!match) return null;
 
@@ -175,7 +175,7 @@ export class ComputerHistoryMuseumScraper extends BaseScraper {
     // CHM pages have date/time in various containers
     const pageText = $("body").text();
     const match = pageText.match(
-      /([A-Z][a-z]+\s+\d{1,2},?\s+\d{4}\s+\d{1,2}(?::\d{2})?\s*[ap]m(?:\s*[–\-—]\s*\d{1,2}(?::\d{2})?\s*[ap]m)?)/i
+      /([A-Z][a-z]+\s+\d{1,2},?\s+\d{4}\s*\d{1,2}(?::\d{2})?\s*[ap]m(?:\s*[–\-—]\s*\d{1,2}(?::\d{2})?\s*[ap]m)?)/i
     );
     return match ? match[1] : null;
   }
