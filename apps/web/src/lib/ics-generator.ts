@@ -1,13 +1,14 @@
 import { createEvents, type DateArray, type EventAttributes } from "ics";
 import type { Event } from "@prisma/client";
 
-function toDateArray(d: Date): DateArray {
+/** Explicit UTC components — avoids system-timezone dependency on the server. */
+function toUtcDateArray(d: Date): DateArray {
   return [
-    d.getFullYear(),
-    d.getMonth() + 1,
-    d.getDate(),
-    d.getHours(),
-    d.getMinutes(),
+    d.getUTCFullYear(),
+    d.getUTCMonth() + 1,
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
   ];
 }
 
@@ -16,7 +17,9 @@ export function generateIcs(event: Event): string {
   const end = event.endTime ? new Date(event.endTime) : null;
 
   const base = {
-    start: toDateArray(start),
+    start: toUtcDateArray(start),
+    startInputType: "utc" as const,
+    startOutputType: "utc" as const,
     title: event.title,
     description: event.description || undefined,
     location: event.location || undefined,
@@ -32,7 +35,7 @@ export function generateIcs(event: Event): string {
   };
 
   const icsEvent: EventAttributes = end
-    ? { ...base, end: toDateArray(end) }
+    ? { ...base, end: toUtcDateArray(end), endInputType: "utc" as const, endOutputType: "utc" as const }
     : { ...base, duration: { hours: 1 } };
 
   const { error, value } = createEvents([icsEvent]);

@@ -2,6 +2,7 @@ import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
 import { SOURCE_SLUGS } from "@lecture-seeker/shared";
 import * as cheerio from "cheerio";
+import { pacificDate } from "./timezone";
 
 const CSM_LOCATION = "College of San Mateo Observatory, Building 36, 4th Floor";
 const CSM_ADDRESS = "1700 W Hillsdale Blvd, San Mateo, CA 94402";
@@ -129,8 +130,8 @@ export class CSMObservatoryScraper extends BaseScraper {
       if (startHour < 12) startHour += 12;
     }
 
-    const start = new Date(currentYear, month, day, startHour, startMin);
-    const end = new Date(currentYear, month, day, endHour, endMin);
+    const start = pacificDate(currentYear, month, day, startHour, startMin);
+    const end = pacificDate(currentYear, month, day, endHour, endMin);
 
     return { start, end };
   }

@@ -27,7 +27,7 @@ export function EventDetail({ event, onClose }: EventDetailProps) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg overflow-y-auto bg-background border-l border-border shadow-xl">
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-background md:inset-y-0 md:left-auto md:right-0 md:w-full md:max-w-lg md:border-l md:border-border md:shadow-xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-4 py-3">
           <h2 className="font-semibold truncate pr-4">{event.title}</h2>
           <button

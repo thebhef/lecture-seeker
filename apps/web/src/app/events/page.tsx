@@ -10,6 +10,7 @@ import { EventGrid } from "@/components/events/EventGrid";
 import { EventDetail } from "@/components/events/EventDetail";
 import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { API_CALENDAR_LIMIT, DEFAULT_START_HOUR } from "@lecture-seeker/shared";
 
 const CalendarView = dynamic(
   () => import("@/components/calendar/CalendarView").then((m) => m.CalendarView),
@@ -37,21 +38,27 @@ interface PaginatedResponse {
 function EventsContent() {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [calendarMounted, setCalendarMounted] = useState(false);
   const [response, setResponse] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventWithSource | null>(null);
+
+  // Once calendar view is activated, keep it mounted to preserve FullCalendar state
+  useEffect(() => {
+    if (viewMode === "calendar") setCalendarMounted(true);
+  }, [viewMode]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams(searchParams.toString());
       if (!params.has("limit")) {
-        params.set("limit", viewMode === "calendar" ? "500" : "50");
+        params.set("limit", String(API_CALENDAR_LIMIT));
       }
-      // Default to upcoming events (now through 1 year out) when no date filter is set
+      // Default to upcoming events (today 18:00 through 1 year out) when no date filter is set
       if (!params.has("startAfter") && !params.has("startBefore")) {
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setHours(DEFAULT_START_HOUR, 0, 0, 0);
         params.set("startAfter", today.toISOString());
         const oneYearOut = new Date(today);
         oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
@@ -65,7 +72,7 @@ function EventsContent() {
     } finally {
       setLoading(false);
     }
-  }, [searchParams, viewMode]);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchEvents();
@@ -91,7 +98,7 @@ function EventsContent() {
           <ViewToggle value={viewMode} onChange={setViewMode} />
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col gap-4 md:flex-row md:gap-6">
           <FilterSidebar />
 
           <main className="relative min-w-0 flex-1">
@@ -100,11 +107,16 @@ function EventsContent() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             )}
-            {viewMode === "calendar" ? (
-              <CalendarView events={events} onSelect={setSelectedEvent} />
-            ) : viewMode === "grid" ? (
+            {/* Keep CalendarView mounted (hidden) once activated to preserve FullCalendar state */}
+            {calendarMounted && (
+              <div style={{ display: viewMode === "calendar" ? "block" : "none" }}>
+                <CalendarView events={events} onSelect={setSelectedEvent} />
+              </div>
+            )}
+            {viewMode === "grid" && (
               <EventGrid events={events} onSelect={setSelectedEvent} />
-            ) : (
+            )}
+            {viewMode === "list" && (
               <EventList events={events} onSelect={setSelectedEvent} />
             )}
 

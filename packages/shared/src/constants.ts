@@ -1,3 +1,12 @@
+// ── API query limits ──────────────────────────────────────────────
+export const API_DEFAULT_LIMIT = 50;
+export const API_MAX_LIMIT = 2000;
+export const API_CALENDAR_LIMIT = 1500;
+
+// Default hour (0-23) for the "start after" filter when no date range is set
+export const DEFAULT_START_HOUR = 18;
+
+// ── Source slugs ──────────────────────────────────────────────────
 export const SOURCE_SLUGS = {
   STANFORD: "stanford",
   UC_BERKELEY: "uc-berkeley",
@@ -130,9 +139,3 @@ export function normalizeEventType(
   if (lower in EVENT_TYPE_ALIASES) return EVENT_TYPE_ALIASES[lower];
   return undefined;
 }
-
-export const TIME_OF_DAY = {
-  morning: { start: 6, end: 12, label: "Morning (6am-12pm)" },
-  afternoon: { start: 12, end: 17, label: "Afternoon (12pm-5pm)" },
-  evening: { start: 17, end: 24, label: "Evening (5pm+)" },
-} as const;

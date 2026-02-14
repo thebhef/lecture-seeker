@@ -22,14 +22,14 @@ model Source {
   config        Json?
   enabled       Boolean    @default(true)
   isBuiltIn     Boolean    @default(false)
-  lastScrapedAt      DateTime?
+  lastScrapedAt      DateTime?  @db.Timestamptz()
   lastError          String?
   lastScrapeEvents   Int       @default(0)
   lastScrapeNew      Int       @default(0)
   lastScrapeDuration Float?
   totalEvents        Int       @default(0)
-  createdAt          DateTime  @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt          DateTime  @default(now()) @db.Timestamptz()
+  updatedAt     DateTime   @updatedAt @db.Timestamptz()
   events        Event[]
 }
 
@@ -41,8 +41,8 @@ model Event {
   title           String
   description     String?
   descriptionHtml String?
-  startTime       DateTime
-  endTime         DateTime?
+  startTime       DateTime  @db.Timestamptz()
+  endTime         DateTime? @db.Timestamptz()
   isAllDay        Boolean  @default(false)
   timezone        String   @default("America/Los_Angeles")
   location        String?
@@ -60,8 +60,8 @@ model Event {
   subjects        String[]
   department      String?
   rawData         Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now()) @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @db.Timestamptz()
 
   @@unique([sourceId, sourceEventId])
   @@index([startTime])

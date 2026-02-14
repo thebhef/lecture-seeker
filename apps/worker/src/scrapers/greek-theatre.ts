@@ -2,6 +2,7 @@ import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
 import { SOURCE_SLUGS } from "@lecture-seeker/shared";
 import * as cheerio from "cheerio";
+import { pacificDate } from "./timezone";
 
 const CALENDAR_URL = "https://thegreekberkeley.com/calendar/";
 
@@ -40,13 +41,13 @@ function parseEventDate(dateText: string): Date | null {
 
   const now = new Date();
   let year = now.getFullYear();
-  const candidate = new Date(year, month, day);
+  const candidate = pacificDate(year, month, day);
   // If the date is more than 2 months in the past, assume next year
   if (candidate.getTime() < now.getTime() - 60 * 24 * 60 * 60 * 1000) {
     year++;
   }
 
-  return new Date(year, month, day);
+  return pacificDate(year, month, day);
 }
 
 /**
@@ -168,15 +169,9 @@ export class GreekTheatreScraper extends BaseScraper {
 
         // Extract show/doors time
         const showTime = parseShowTime(containerText);
-        let startTime: Date;
-        if (showTime) {
-          startTime = new Date(eventDate);
-          startTime.setHours(showTime.hours, showTime.minutes, 0, 0);
-        } else {
-          // Default to 7pm if no time found
-          startTime = new Date(eventDate);
-          startTime.setHours(19, 0, 0, 0);
-        }
+        const startTime = showTime
+          ? pacificDate(eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate(), showTime.hours, showTime.minutes)
+          : pacificDate(eventDate.getUTCFullYear(), eventDate.getUTCMonth(), eventDate.getUTCDate(), 19, 0);
 
         // Extract ticket URL
         const ticketUrl =

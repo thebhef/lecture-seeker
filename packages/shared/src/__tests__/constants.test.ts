@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, TIME_OF_DAY, normalizeEventType } from "../constants";
+import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, normalizeEventType } from "../constants";
 
 describe("SOURCE_SLUGS", () => {
   it("contains all expected source slugs", () => {
@@ -101,30 +101,3 @@ describe("normalizeEventType", () => {
   });
 });
 
-describe("TIME_OF_DAY", () => {
-  it("defines morning, afternoon, and evening buckets", () => {
-    expect(TIME_OF_DAY.morning).toBeDefined();
-    expect(TIME_OF_DAY.afternoon).toBeDefined();
-    expect(TIME_OF_DAY.evening).toBeDefined();
-  });
-
-  it("morning covers 6am to noon", () => {
-    expect(TIME_OF_DAY.morning.start).toBe(6);
-    expect(TIME_OF_DAY.morning.end).toBe(12);
-  });
-
-  it("afternoon covers noon to 5pm", () => {
-    expect(TIME_OF_DAY.afternoon.start).toBe(12);
-    expect(TIME_OF_DAY.afternoon.end).toBe(17);
-  });
-
-  it("evening covers 5pm to midnight", () => {
-    expect(TIME_OF_DAY.evening.start).toBe(17);
-    expect(TIME_OF_DAY.evening.end).toBe(24);
-  });
-
-  it("buckets cover the full day contiguously from 6am", () => {
-    expect(TIME_OF_DAY.morning.end).toBe(TIME_OF_DAY.afternoon.start);
-    expect(TIME_OF_DAY.afternoon.end).toBe(TIME_OF_DAY.evening.start);
-  });
-});

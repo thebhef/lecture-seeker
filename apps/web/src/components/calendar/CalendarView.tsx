@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useMemo } from "react";
-import { Calendar } from "@fullcalendar/core";
+import { useMemo, useCallback, useRef } from "react";
+import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
+import type { EventClickArg } from "@fullcalendar/core";
 import type { EventWithSource } from "@/lib/types";
 
 interface CalendarViewProps {
@@ -17,25 +18,37 @@ const SOURCE_COLORS: Record<string, string> = {
   "uc-berkeley": "#003262",
   "cal-bears": "#FDB515",
   "csm-observatory": "#2563eb",
+  "cal-academy": "#1a9641",
 };
 
+// Stable references — recreating these on every render causes FullCalendar to reinitialize
+const PLUGINS = [dayGridPlugin, timeGridPlugin, listPlugin];
+const HEADER_DESKTOP = { left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,listWeek" };
+const HEADER_MOBILE = { left: "prev,next", center: "title", right: "listWeek,dayGridMonth" };
+
 export function CalendarView({ events, onSelect }: CalendarViewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const calendarRef = useRef<Calendar | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const calendarEvents = useMemo(() => {
     const now = new Date();
     return events.map((event) => {
-      const startTime = new Date(event.startTime);
-      const endTime = event.endTime ? new Date(event.endTime) : undefined;
-      const past = (endTime || startTime) < now;
+      const startStr = typeof event.startTime === "string"
+        ? event.startTime
+        : new Date(event.startTime).toISOString();
+      const endStr = event.endTime
+        ? typeof event.endTime === "string"
+          ? event.endTime
+          : new Date(event.endTime).toISOString()
+        : undefined;
+      const past = new Date(startStr) < now;
       return {
         id: event.id,
         title: event.title,
-        start: startTime,
-        end: endTime,
+        start: startStr,
+        end: endStr,
         allDay: event.isAllDay,
         backgroundColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
         borderColor: SOURCE_COLORS[event.source.slug] || "#6b7280",
@@ -45,49 +58,22 @@ export function CalendarView({ events, onSelect }: CalendarViewProps) {
     });
   }, [events]);
 
-  const handleEventClick = useCallback(
-    (info: { event: { extendedProps: Record<string, unknown> } }) => {
-      onSelectRef.current(info.event.extendedProps.event as EventWithSource);
-    },
-    []
+  const handleEventClick = useCallback((info: EventClickArg) => {
+    onSelectRef.current(info.event.extendedProps.event as EventWithSource);
+  }, []);
+
+  return (
+    <div className="calendar-wrapper">
+      <FullCalendar
+        plugins={PLUGINS}
+        initialView={isMobile ? "listWeek" : "dayGridMonth"}
+        headerToolbar={isMobile ? HEADER_MOBILE : HEADER_DESKTOP}
+        events={calendarEvents}
+        eventClick={handleEventClick}
+        height="auto"
+        dayMaxEvents={3}
+        nowIndicator={true}
+      />
+    </div>
   );
-
-  // Initialize calendar once
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const calendar = new Calendar(el, {
-      plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
-      initialView: "dayGridMonth",
-      headerToolbar: {
-        left: "prev,next today",
-        center: "title",
-        right: "dayGridMonth,timeGridWeek,listWeek",
-      },
-      eventClick: handleEventClick,
-      height: "auto",
-      dayMaxEvents: 3,
-      nowIndicator: true,
-    });
-
-    calendar.render();
-    calendarRef.current = calendar;
-
-    return () => {
-      calendar.destroy();
-      calendarRef.current = null;
-    };
-  }, [handleEventClick]);
-
-  // Update events whenever they change
-  useEffect(() => {
-    const cal = calendarRef.current;
-    if (!cal) return;
-
-    cal.removeAllEventSources();
-    cal.addEventSource(calendarEvents);
-  }, [calendarEvents]);
-
-  return <div ref={containerRef} className="calendar-wrapper" />;
 }
