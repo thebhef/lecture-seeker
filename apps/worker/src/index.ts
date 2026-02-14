@@ -185,8 +185,13 @@ async function scrapeAll() {
     where: { enabled: true },
   });
 
-  for (const source of sources) {
-    await scrapeSource(source);
+  const results = await Promise.allSettled(
+    sources.map((source) => scrapeSource(source))
+  );
+
+  const failures = results.filter((r) => r.status === "rejected");
+  if (failures.length > 0) {
+    console.warn(`  ${failures.length} scraper(s) had unhandled errors`);
   }
   console.log("--- Scrape run complete ---\n");
 }
