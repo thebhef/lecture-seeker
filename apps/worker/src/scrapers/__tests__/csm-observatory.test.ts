@@ -12,7 +12,7 @@ function pacificPart(d: Date, type: string): number {
   return type === "hour" && v === 24 ? 0 : v;
 }
 
-const SAMPLE_HTML = `
+const OBSERVATORY_HTML = `
 <html>
 <body>
   <h3>Spring 2026 Schedule</h3>
@@ -26,7 +26,59 @@ const SAMPLE_HTML = `
 </body>
 </html>`;
 
+const PLANETARIUM_HTML = `
+<html>
+<body>
+  <h2>Spring 2026 Schedule</h2>
+  <table>
+    <tr><td>Date</td><td>Title</td></tr>
+    <tr><td>No Show in February</td><td>Holiday (Lincoln's Birthday)</td></tr>
+    <tr><td>March 13</td><td>TBD</td></tr>
+    <tr><td>April 10</td><td>Journey to the Stars</td></tr>
+    <tr><td>May 15</td><td>TBD</td></tr>
+  </table>
+
+  <h2>Spring 2026 Schedule</h2>
+  <table>
+    <tr><td>Date</td><td>Speaker</td></tr>
+    <tr><td>February 6</td><td>Dr Sofia Sheikh, SETI Research Scientist: Searching for Technological Life in the Universe</td></tr>
+    <tr><td>March 6</td><td>TBD</td></tr>
+    <tr><td>No talk in April</td><td>Spring Break</td></tr>
+    <tr><td>May 1</td><td>Dr Brian Lantz, Stanford, Exploring the Gravitational Wave Universe</td></tr>
+  </table>
+</body>
+</html>`;
+
 const EMPTY_HTML = `<html><body><p>No schedule available</p></body></html>`;
+
+/** Mock fetch to return different HTML based on the URL. */
+function mockFetch(
+  observatoryHtml: string | null,
+  planetariumHtml: string | null
+) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation((url: string) => {
+      if (url.includes("observatory.asp")) {
+        if (observatoryHtml === null)
+          return Promise.resolve({ ok: false, status: 404 });
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(observatoryHtml),
+        });
+      }
+      if (url.includes("planetarium.asp")) {
+        if (planetariumHtml === null)
+          return Promise.resolve({ ok: false, status: 404 });
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(planetariumHtml),
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404 });
+    })
+  );
+}
 
 describe("CSMObservatoryScraper", () => {
   let scraper: CSMObservatoryScraper;
@@ -40,21 +92,20 @@ describe("CSMObservatoryScraper", () => {
     expect(scraper.sourceSlug).toBe("csm-observatory");
   });
 
-  it("parses schedule table correctly", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve(SAMPLE_HTML),
-      })
-    );
+  // ── Observatory (Jazz Under the Stars) ────────────────────────────
+
+  it("parses observatory schedule table correctly", async () => {
+    mockFetch(OBSERVATORY_HTML, EMPTY_HTML);
 
     const result = await scraper.scrape();
 
-    // Should skip "Time TBD" row, so 3 events
-    expect(result.events).toHaveLength(3);
+    // Should skip "Time TBD" row, so 3 observatory events
+    const jazzEvents = result.events.filter((e) =>
+      e.sourceEventId.startsWith("csm-jazz-")
+    );
+    expect(jazzEvents).toHaveLength(3);
 
-    const jan = result.events[0];
+    const jan = jazzEvents[0];
     expect(jan.title).toBe("Jazz Under the Stars");
     expect(jan.eventType).toBe("astronomy");
     expect(jan.cost).toBe("Free");
@@ -65,92 +116,189 @@ describe("CSMObservatoryScraper", () => {
     expect(jan.subjects).toEqual(["astronomy", "jazz", "stargazing"]);
     expect(jan.isOnline).toBe(false);
     expect(jan.isCanceled).toBe(false);
-    expect(jan.sourceEventId).toMatch(/^csm-jazz-/);
     expect(jan.audience).toBe("public");
   });
 
-  it("parses time ranges correctly", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve(SAMPLE_HTML),
-      })
-    );
+  it("parses observatory time ranges correctly", async () => {
+    mockFetch(OBSERVATORY_HTML, EMPTY_HTML);
 
     const result = await scraper.scrape();
-    const currentYear = new Date().getFullYear();
+    const jazzEvents = result.events.filter((e) =>
+      e.sourceEventId.startsWith("csm-jazz-")
+    );
 
     // Jan 24, 7:00-9:00PM Pacific
-    const jan = result.events[0];
-    expect(pacificPart(jan.startTime, "month") - 1).toBe(0); // January (Intl month is 1-based)
+    const jan = jazzEvents[0];
+    expect(pacificPart(jan.startTime, "month") - 1).toBe(0);
     expect(pacificPart(jan.startTime, "day")).toBe(24);
-    expect(pacificPart(jan.startTime, "hour")).toBe(19); // 7PM
-    expect(pacificPart(jan.endTime!, "hour")).toBe(21); // 9PM
+    expect(pacificPart(jan.startTime, "hour")).toBe(19);
+    expect(pacificPart(jan.endTime!, "hour")).toBe(21);
 
     // Mar 21, 8:00-10:00PM Pacific
-    const mar = result.events[1];
-    expect(pacificPart(mar.startTime, "month") - 1).toBe(2); // March
-    expect(pacificPart(mar.startTime, "hour")).toBe(20); // 8PM
-    expect(pacificPart(mar.endTime!, "hour")).toBe(22); // 10PM
+    const mar = jazzEvents[1];
+    expect(pacificPart(mar.startTime, "month") - 1).toBe(2);
+    expect(pacificPart(mar.startTime, "hour")).toBe(20);
+    expect(pacificPart(mar.endTime!, "hour")).toBe(22);
 
     // Apr 25, 8:30-10:30PM Pacific
-    const apr = result.events[2];
+    const apr = jazzEvents[2];
     expect(pacificPart(apr.startTime, "minute")).toBe(30);
     expect(pacificPart(apr.endTime!, "minute")).toBe(30);
   });
 
-  it("skips TBD time entries", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve(SAMPLE_HTML),
-      })
-    );
+  it("skips TBD time entries in observatory table", async () => {
+    mockFetch(OBSERVATORY_HTML, EMPTY_HTML);
 
     const result = await scraper.scrape();
-    const titles = result.events.map((e) => e.sourceEventId);
-    // Feb 21 has "Time TBD", should be skipped
-    expect(titles.every((id) => !id.includes("02-21"))).toBe(true);
+    const ids = result.events.map((e) => e.sourceEventId);
+    expect(ids.every((id) => !id.includes("02-21"))).toBe(true);
   });
 
-  it("returns empty for page with no table", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve(EMPTY_HTML),
-      })
-    );
+  // ── Planetarium (The Sky Tonight) ─────────────────────────────────
+
+  it("parses planetarium show schedule", async () => {
+    mockFetch(EMPTY_HTML, PLANETARIUM_HTML);
 
     const result = await scraper.scrape();
-    expect(result.events).toHaveLength(0);
+    const shows = result.events.filter((e) =>
+      e.sourceEventId.startsWith("csm-planetarium-")
+    );
+
+    // "No Show in February" is skipped, 3 shows remain
+    expect(shows).toHaveLength(3);
+
+    // March 13 — title is TBD
+    expect(shows[0].title).toBe("The Sky Tonight");
+    expect(shows[0].eventType).toBe("astronomy");
+    expect(shows[0].location).toContain("Planetarium");
+    expect(pacificPart(shows[0].startTime, "month") - 1).toBe(2);
+    expect(pacificPart(shows[0].startTime, "day")).toBe(13);
+    expect(pacificPart(shows[0].startTime, "hour")).toBe(19);
+    expect(pacificPart(shows[0].endTime!, "hour")).toBe(21);
+
+    // April 10 — has a specific title
+    expect(shows[1].title).toBe("The Sky Tonight: Journey to the Stars");
+    expect(pacificPart(shows[1].startTime, "month") - 1).toBe(3);
+
+    // May 15 — TBD title
+    expect(shows[2].title).toBe("The Sky Tonight");
   });
 
-  it("handles HTTP errors gracefully", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValueOnce({ ok: false, status: 404 })
-    );
+  it("planetarium events are free and public", async () => {
+    mockFetch(EMPTY_HTML, PLANETARIUM_HTML);
 
     const result = await scraper.scrape();
-    expect(result.events).toHaveLength(0);
-    expect(result.errors.length).toBeGreaterThan(0);
+    const shows = result.events.filter((e) =>
+      e.sourceEventId.startsWith("csm-planetarium-")
+    );
+
+    for (const show of shows) {
+      expect(show.cost).toBe("Free");
+      expect(show.audience).toBe("public");
+      expect(show.isOnline).toBe(false);
+      expect(show.isCanceled).toBe(false);
+      expect(show.subjects).toContain("planetarium");
+    }
   });
 
-  it("generates unique source event IDs per date", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValueOnce({
-        ok: true,
-        text: () => Promise.resolve(SAMPLE_HTML),
-      })
+  // ── SMCAS (Monthly Meeting & Guest Speaker) ───────────────────────
+
+  it("parses SMCAS speaker schedule", async () => {
+    mockFetch(EMPTY_HTML, PLANETARIUM_HTML);
+
+    const result = await scraper.scrape();
+    const talks = result.events.filter((e) =>
+      e.sourceEventId.startsWith("csm-smcas-")
     );
+
+    // "No talk in April" is skipped, 3 talks remain
+    expect(talks).toHaveLength(3);
+
+    // February 6 — named speaker
+    expect(talks[0].title).toContain("SMCAS:");
+    expect(talks[0].title).toContain("Dr Sofia Sheikh");
+    expect(talks[0].eventType).toBe("lecture");
+    expect(talks[0].location).toContain("Planetarium");
+    expect(pacificPart(talks[0].startTime, "month") - 1).toBe(1);
+    expect(pacificPart(talks[0].startTime, "day")).toBe(6);
+    expect(pacificPart(talks[0].startTime, "hour")).toBe(19);
+    expect(pacificPart(talks[0].endTime!, "hour")).toBe(21);
+
+    // March 6 — TBD speaker
+    expect(talks[1].title).toBe("SMCAS Monthly Meeting");
+
+    // May 1 — named speaker
+    expect(talks[2].title).toContain("Dr Brian Lantz");
+  });
+
+  // ── Combined scraping ─────────────────────────────────────────────
+
+  it("scrapes both observatory and planetarium pages", async () => {
+    mockFetch(OBSERVATORY_HTML, PLANETARIUM_HTML);
+
+    const result = await scraper.scrape();
+
+    const jazz = result.events.filter((e) => e.sourceEventId.startsWith("csm-jazz-"));
+    const shows = result.events.filter((e) => e.sourceEventId.startsWith("csm-planetarium-"));
+    const talks = result.events.filter((e) => e.sourceEventId.startsWith("csm-smcas-"));
+
+    expect(jazz).toHaveLength(3);
+    expect(shows).toHaveLength(3);
+    expect(talks).toHaveLength(3);
+    expect(result.events).toHaveLength(9);
+  });
+
+  it("generates unique source event IDs across all event types", async () => {
+    mockFetch(OBSERVATORY_HTML, PLANETARIUM_HTML);
 
     const result = await scraper.scrape();
     const ids = result.events.map((e) => e.sourceEventId);
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(ids.length);
+  });
+
+  // ── Error handling ────────────────────────────────────────────────
+
+  it("returns empty for pages with no table", async () => {
+    mockFetch(EMPTY_HTML, EMPTY_HTML);
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+  });
+
+  it("observatory failure does not break planetarium scraping", async () => {
+    mockFetch(null, PLANETARIUM_HTML);
+
+    const result = await scraper.scrape();
+
+    // Planetarium events still scraped
+    const shows = result.events.filter((e) => e.sourceEventId.startsWith("csm-planetarium-"));
+    const talks = result.events.filter((e) => e.sourceEventId.startsWith("csm-smcas-"));
+    expect(shows.length).toBeGreaterThan(0);
+    expect(talks.length).toBeGreaterThan(0);
+
+    // Error recorded for observatory
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("planetarium failure does not break observatory scraping", async () => {
+    mockFetch(OBSERVATORY_HTML, null);
+
+    const result = await scraper.scrape();
+
+    // Observatory events still scraped
+    const jazz = result.events.filter((e) => e.sourceEventId.startsWith("csm-jazz-"));
+    expect(jazz.length).toBeGreaterThan(0);
+
+    // Error recorded for planetarium
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("handles both pages failing gracefully", async () => {
+    mockFetch(null, null);
+
+    const result = await scraper.scrape();
+    expect(result.events).toHaveLength(0);
+    expect(result.errors.length).toBeGreaterThan(0);
   });
 });

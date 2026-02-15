@@ -42,7 +42,7 @@ export const BUILT_IN_SOURCES = [
     name: "CSM Observatory",
     slug: SOURCE_SLUGS.CSM_OBSERVATORY,
     type: "HTML_SCRAPE" as const,
-    url: "https://collegeofsanmateo.edu/astronomy/observatory.asp",
+    url: "https://collegeofsanmateo.edu/astronomy/",
   },
   {
     name: "Shoreline Amphitheatre",
