@@ -117,11 +117,11 @@ function stripHtml(html: string): string {
 
 function inferEventType(title: string): string | undefined {
   const lower = title.toLowerCase();
-  if (/tea talk/i.test(lower)) return normalizeEventType("seminar") ?? "seminar";
+  if (/tea talk/i.test(lower)) return "lecture";
   if (/colloqui/i.test(lower)) return normalizeEventType("colloquium") ?? "conference";
-  if (/thesis defense/i.test(lower)) return normalizeEventType("lecture") ?? "lecture";
-  if (/workshop/i.test(lower)) return normalizeEventType("workshop") ?? "workshop";
-  if (/conference/i.test(lower)) return normalizeEventType("conference") ?? "conference";
-  // Most KIPAC events are academic seminars
-  return "seminar";
+  if (/thesis defense/i.test(lower)) return "lecture";
+  if (/workshop/i.test(lower)) return "workshop";
+  if (/conference/i.test(lower)) return "conference";
+  // Most KIPAC events are academic talks/lectures
+  return "lecture";
 }

@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import type { EventWithSource } from "@/lib/types";
 import { InviteDialog } from "./InviteDialog";
+import { AUDIENCE_TYPES } from "@lecture-seeker/shared";
 
 interface EventDetailProps {
   event: EventWithSource;
@@ -91,7 +92,7 @@ export function EventDetail({ event, onClose }: EventDetailProps) {
             {event.audience && (
               <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                 <Users className="h-3 w-3" />
-                {event.audience}
+                {AUDIENCE_TYPES[event.audience] || event.audience}
               </span>
             )}
             {event.department && (

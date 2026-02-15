@@ -52,8 +52,12 @@ describe("EVENT_TYPES", () => {
     expect(EVENT_TYPES.astronomy).toBe("Astronomy");
   });
 
-  it("has at least 10 event types", () => {
-    expect(Object.keys(EVENT_TYPES).length).toBeGreaterThanOrEqual(10);
+  it("has exactly 11 event types", () => {
+    expect(Object.keys(EVENT_TYPES)).toHaveLength(11);
+  });
+
+  it("does not include seminar as a standalone type", () => {
+    expect(EVENT_TYPES).not.toHaveProperty("seminar");
   });
 });
 
@@ -75,6 +79,14 @@ describe("normalizeEventType", () => {
     expect(normalizeEventType("symposium")).toBe("conference");
     expect(normalizeEventType("reception")).toBe("social");
     expect(normalizeEventType("athletics")).toBe("sports");
+  });
+
+  it("normalizes seminar, class, and course to lecture", () => {
+    expect(normalizeEventType("seminar")).toBe("lecture");
+    expect(normalizeEventType("Seminar")).toBe("lecture");
+    expect(normalizeEventType("seminars")).toBe("lecture");
+    expect(normalizeEventType("class")).toBe("lecture");
+    expect(normalizeEventType("course")).toBe("lecture");
   });
 
   it("is case-insensitive", () => {

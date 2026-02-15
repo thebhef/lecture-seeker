@@ -120,13 +120,13 @@ describe("KipacScraper", () => {
     expect(result.events[0].isOnline).toBe(true);
   });
 
-  it("infers 'seminar' type for tea talk titles", async () => {
+  it("infers 'lecture' type for tea talk titles", async () => {
     vi.stubGlobal(
       "fetch",
       mockFetchSuccess([mockEvent({ title: "KIPAC Tea Talk: Dark Matter" })])
     );
     const result = await scraper.scrape();
-    expect(result.events[0].eventType).toBe("seminar");
+    expect(result.events[0].eventType).toBe("lecture");
   });
 
   it("infers 'conference' type for colloquium titles", async () => {
@@ -147,13 +147,13 @@ describe("KipacScraper", () => {
     expect(result.events[0].eventType).toBe("lecture");
   });
 
-  it("defaults to 'seminar' for generic KIPAC events", async () => {
+  it("defaults to 'lecture' for generic KIPAC events", async () => {
     vi.stubGlobal(
       "fetch",
       mockFetchSuccess([mockEvent({ title: "Special Discussion on Cosmology" })])
     );
     const result = await scraper.scrape();
-    expect(result.events[0].eventType).toBe("seminar");
+    expect(result.events[0].eventType).toBe("lecture");
   });
 
   it("paginates through multiple pages", async () => {

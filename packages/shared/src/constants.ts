@@ -83,7 +83,6 @@ export const EVENT_TYPES: Record<string, string> = {
   sports: "Sports",
   workshop: "Workshop",
   conference: "Conference",
-  seminar: "Seminar",
   concert: "Concert",
   film: "Film",
   astronomy: "Astronomy",
@@ -105,6 +104,10 @@ const EVENT_TYPE_ALIASES: Record<string, string> = {
   presentation: "lecture",
   "lecture/panel": "lecture",
   "lecture/presentation/talk": "lecture",
+  seminar: "lecture",
+  seminars: "lecture",
+  class: "lecture",
+  course: "lecture",
   // performance variants
   "performing arts": "performance",
   performances: "performance",
@@ -122,8 +125,6 @@ const EVENT_TYPE_ALIASES: Record<string, string> = {
   symposium: "conference",
   colloquium: "conference",
   forum: "conference",
-  // seminar variants
-  seminars: "seminar",
   // film variants
   screening: "film",
   "film screening": "film",

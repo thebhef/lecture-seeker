@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { normalizeAudience, normalizeEventType } from "@lecture-seeker/shared";
 
 export async function GET() {
   const [eventTypes, sources, locations, audiences] = await Promise.all([
@@ -30,15 +31,15 @@ export async function GET() {
   ]);
 
   return NextResponse.json({
-    eventTypes: eventTypes
-      .map((e) => e.eventType)
-      .filter(Boolean) as string[],
+    eventTypes: [...new Set(
+      eventTypes.map((e) => normalizeEventType(e.eventType)).filter(Boolean)
+    )] as string[],
     sources: sources.map((s) => ({ slug: s.slug, name: s.name })),
     locations: locations
       .map((e) => e.location)
       .filter(Boolean) as string[],
-    audiences: audiences
-      .map((e) => e.audience)
-      .filter(Boolean) as string[],
+    audiences: [...new Set(
+      audiences.map((e) => normalizeAudience(e.audience)).filter(Boolean)
+    )] as string[],
   });
 }

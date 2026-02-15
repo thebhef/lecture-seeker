@@ -11,7 +11,7 @@ import { CalAcademyScraper } from "./scrapers/cal-academy";
 import { ComputerHistoryMuseumScraper } from "./scrapers/computer-history-museum";
 import { KipacScraper } from "./scrapers/kipac";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
-import { BUILT_IN_SOURCES } from "@lecture-seeker/shared";
+import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
 
 const prisma = new PrismaClient();
@@ -115,8 +115,8 @@ async function scrapeSource(source: Source) {
           cost: event.cost,
           isCanceled: event.isCanceled,
           isOnline: event.isOnline,
-          eventType: event.eventType,
-          audience: event.audience,
+          eventType: normalizeEventType(event.eventType),
+          audience: normalizeAudience(event.audience),
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,
@@ -139,8 +139,8 @@ async function scrapeSource(source: Source) {
           cost: event.cost,
           isCanceled: event.isCanceled,
           isOnline: event.isOnline,
-          eventType: event.eventType,
-          audience: event.audience,
+          eventType: normalizeEventType(event.eventType),
+          audience: normalizeAudience(event.audience),
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,
