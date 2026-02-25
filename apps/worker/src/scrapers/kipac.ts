@@ -58,6 +58,7 @@ export class KipacScraper extends BaseScraper {
       }
 
       offset += PAGE_SIZE;
+      if (offset < total) await this.sleep(30_000); // robots.txt crawl-delay: 30
     } while (offset < total);
 
     return allEvents;

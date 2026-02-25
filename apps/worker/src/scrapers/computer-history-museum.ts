@@ -91,8 +91,11 @@ export class ComputerHistoryMuseumScraper extends BaseScraper {
 
     // Step 2: Fetch each event detail page
     const events: NormalizedEvent[] = [];
+    let first = true;
     for (const url of eventUrls) {
       try {
+        if (!first) await this.sleep(1000); // courtesy delay between detail pages
+        first = false;
         const event = await this.scrapeDetailPage(url);
         if (event) events.push(event);
       } catch (err) {

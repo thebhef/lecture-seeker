@@ -5,6 +5,11 @@ export abstract class BaseScraper implements Scraper {
 
   protected errors: string[] = [];
 
+  /** Sleep for the given number of milliseconds (for crawl-delay compliance). */
+  protected sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   abstract fetchAndParse(): Promise<NormalizedEvent[]>;
 
   async scrape(): Promise<ScraperResult> {

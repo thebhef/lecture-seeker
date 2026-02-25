@@ -68,6 +68,7 @@ export class CalAcademyScraper extends BaseScraper {
       const dateStr = formatDate(date);
 
       try {
+        if (i > 0) await this.sleep(10_000); // robots.txt crawl-delay: 10
         const dayEvents = await this.scrapeDayPage(date, dateStr);
         allEvents.push(...dayEvents);
         consecutiveFailures = 0;

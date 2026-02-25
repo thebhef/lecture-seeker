@@ -72,6 +72,7 @@ export class StanfordScraper extends BaseScraper {
       }
 
       page++;
+      if (page <= totalPages) await this.sleep(1000); // robots.txt crawl-delay: 1
     } while (page <= totalPages);
 
     return allEvents;
