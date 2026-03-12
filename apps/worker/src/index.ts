@@ -1,6 +1,7 @@
 import { PrismaClient, type Source } from "@prisma/client";
 import cron from "node-cron";
 import http from "node:http";
+import { parseArgs } from "node:util";
 import { StanfordScraper } from "./scrapers/stanford";
 import { UCBerkeleyScraper } from "./scrapers/uc-berkeley";
 import { CalBearsScraper } from "./scrapers/cal-bears";
@@ -10,6 +11,9 @@ import { GreekTheatreScraper } from "./scrapers/greek-theatre";
 import { CalAcademyScraper } from "./scrapers/cal-academy";
 import { ComputerHistoryMuseumScraper } from "./scrapers/computer-history-museum";
 import { KipacScraper } from "./scrapers/kipac";
+import { SjsuScraper } from "./scrapers/sjsu";
+import { CalStateLibraryScraper } from "./scrapers/cal-state-library";
+import { SanMateoLibraryScraper } from "./scrapers/san-mateo-library";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
 import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
@@ -36,6 +40,12 @@ function getScraperForSource(source: Source): BaseScraper {
       return new ComputerHistoryMuseumScraper();
     case "kipac":
       return new KipacScraper();
+    case "sjsu":
+      return new SjsuScraper();
+    case "cal-state-library":
+      return new CalStateLibraryScraper();
+    case "san-mateo-library":
+      return new SanMateoLibraryScraper();
     default:
       if (source.type === "ICS_FEED") {
         return new GenericIcsScraper(source.slug, source.url);
@@ -179,11 +189,20 @@ async function scrapeSource(source: Source) {
   }
 }
 
-async function scrapeAll() {
-  console.log(`\n--- Scrape run at ${new Date().toISOString()} ---`);
-  const sources = await prisma.source.findMany({
-    where: { enabled: true },
-  });
+async function scrapeSources(slug?: string) {
+  const label = slug ? `source=${slug}` : "all";
+  console.log(`\n--- Scrape run (${label}) at ${new Date().toISOString()} ---`);
+
+  const where: { enabled: boolean; slug?: string } = { enabled: true };
+  if (slug) where.slug = slug;
+
+  const sources = await prisma.source.findMany({ where });
+
+  if (slug && sources.length === 0) {
+    console.error(`No enabled source found with slug "${slug}"`);
+    console.log("--- Scrape run complete ---\n");
+    return;
+  }
 
   const results = await Promise.allSettled(
     sources.map((source) => scrapeSource(source))
@@ -199,13 +218,28 @@ async function scrapeAll() {
 let scraping = false;
 
 async function main() {
+  const { values } = parseArgs({
+    options: {
+      source: { type: "string", short: "s" },
+    },
+    strict: false,
+  });
+  const cliSource = values.source as string | undefined;
+
   console.log("Lecture Seeker Worker starting...");
 
   await seedSources();
 
+  // One-shot mode: scrape a single source and exit
+  if (cliSource) {
+    await scrapeSources(cliSource);
+    await prisma.$disconnect();
+    return;
+  }
+
   // Run initial scrape
   scraping = true;
-  await scrapeAll().finally(() => { scraping = false; });
+  await scrapeSources().finally(() => { scraping = false; });
 
   // Schedule periodic scrapes
   const hours = parseInt(process.env.SCRAPE_INTERVAL_HOURS || "6", 10);
@@ -215,7 +249,7 @@ async function main() {
   cron.schedule(cronExpression, () => {
     if (scraping) return;
     scraping = true;
-    scrapeAll()
+    scrapeSources()
       .catch((err) => console.error("Scheduled scrape failed:", err))
       .finally(() => { scraping = false; });
   });
@@ -225,24 +259,27 @@ async function main() {
   const server = http.createServer((req, res) => {
     res.setHeader("Content-Type", "application/json");
 
-    if (req.method === "POST" && req.url === "/scrape") {
+    const reqUrl = new URL(req.url || "/", `http://localhost`);
+
+    if (req.method === "POST" && reqUrl.pathname === "/scrape") {
       if (scraping) {
         res.writeHead(409);
         res.end(JSON.stringify({ error: "Scrape already in progress" }));
         return;
       }
+      const sourceSlug = reqUrl.searchParams.get("source") || undefined;
       scraping = true;
-      console.log("On-demand scrape triggered via HTTP");
-      scrapeAll()
+      console.log(`On-demand scrape triggered via HTTP${sourceSlug ? ` (source=${sourceSlug})` : ""}`);
+      scrapeSources(sourceSlug)
         .catch((err) => console.error("On-demand scrape failed:", err))
         .finally(() => { scraping = false; });
 
       res.writeHead(202);
-      res.end(JSON.stringify({ status: "started" }));
+      res.end(JSON.stringify({ status: "started", source: sourceSlug || "all" }));
       return;
     }
 
-    if (req.method === "GET" && req.url === "/health") {
+    if (req.method === "GET" && reqUrl.pathname === "/health") {
       res.writeHead(200);
       res.end(JSON.stringify({ status: "ok", scraping }));
       return;

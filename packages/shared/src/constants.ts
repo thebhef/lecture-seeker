@@ -17,6 +17,9 @@ export const SOURCE_SLUGS = {
   CAL_ACADEMY: "cal-academy",
   COMPUTER_HISTORY_MUSEUM: "computer-history-museum",
   KIPAC: "kipac",
+  SJSU: "sjsu",
+  CAL_STATE_LIBRARY: "cal-state-library",
+  SAN_MATEO_LIBRARY: "san-mateo-library",
 } as const;
 
 export const BUILT_IN_SOURCES = [
@@ -73,6 +76,24 @@ export const BUILT_IN_SOURCES = [
     slug: SOURCE_SLUGS.KIPAC,
     type: "API_JSON" as const,
     url: "https://kipac.stanford.edu/jsonapi/node/stanford_event",
+  },
+  {
+    name: "SJSU Events",
+    slug: SOURCE_SLUGS.SJSU,
+    type: "API_JSON" as const,
+    url: "https://events.sjsu.edu/api/2/events",
+  },
+  {
+    name: "California State Library",
+    slug: SOURCE_SLUGS.CAL_STATE_LIBRARY,
+    type: "ICS_FEED" as const,
+    url: "https://libraryca.libcal.com/ical_subscribe.php?src=p&cid=17752",
+  },
+  {
+    name: "San Mateo County Library",
+    slug: SOURCE_SLUGS.SAN_MATEO_LIBRARY,
+    type: "API_JSON" as const,
+    url: "https://gateway.bibliocommons.com/v2/libraries/smcl/events",
   },
 ];
 
@@ -138,6 +159,22 @@ const EVENT_TYPE_ALIASES: Record<string, string> = {
   athletics: "sports",
   game: "sports",
   match: "sports",
+  // library / BiblioCommons variants
+  "book club": "social",
+  "book discussion": "social",
+  crafts: "workshop",
+  "arts, crafts, diy": "workshop",
+  "arts and crafts": "workshop",
+  "storytime": "performance",
+  "story time": "performance",
+  "author talk": "lecture",
+  "author event": "lecture",
+  "author visit": "lecture",
+  "stem/steam": "workshop",
+  "technology": "workshop",
+  meeting: "social",
+  "health, wellness": "workshop",
+  webinar: "lecture",
 };
 
 /**
@@ -191,6 +228,14 @@ const AUDIENCE_ALIASES: Record<string, string> = {
   "academic community": "academic",
   "research community": "academic",
   "faculty and students": "academic",
+  // library audience variants
+  adults: "public",
+  teens: "public",
+  children: "public",
+  families: "public",
+  "kids": "public",
+  "preschoolers": "public",
+  "young adults": "public",
 };
 
 /**

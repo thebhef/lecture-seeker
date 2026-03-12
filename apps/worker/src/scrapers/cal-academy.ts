@@ -17,6 +17,17 @@ const CAL_ACADEMY_LNG = -122.4661;
 const DAYS_AHEAD = 30;
 
 /**
+ * Returns true if the title is about venue operating hours rather than an actual event.
+ * Matches patterns like "Museum Opens", "The Cal Academy closes at 5",
+ * "The Cal Academy is open at 9:30 a.m.", etc.
+ */
+function isHoursEntry(title: string): boolean {
+  return /\bmuseum\s+(opens?|closes?)\b/i.test(title) ||
+    /\b(cal\s*academy|academy)\s+(is\s+)?(open|closes?|closed)\b/i.test(title) ||
+    /\b(opens?|closes?)\s+at\s+\d/i.test(title);
+}
+
+/**
  * Formats a Date as YYYY-MM-DD for the calendar URL.
  */
 function formatDate(date: Date): string {
@@ -186,8 +197,8 @@ export class CalAcademyScraper extends BaseScraper {
         const title = $titleEl.text().trim();
         if (!title) return;
 
-        // Skip generic museum operations entries
-        if (/^museum\s+(opens?|closes?)/i.test(title)) return;
+        // Skip venue operating-hours entries
+        if (isHoursEntry(title)) return;
 
         // Extract time — look for time-like text anywhere in the container
         const timeText =
@@ -297,7 +308,7 @@ export class CalAcademyScraper extends BaseScraper {
   ): NormalizedEvent | null {
     const href = $link.attr("href") || "";
     const title = $link.text().trim();
-    if (!title || /^museum\s+(opens?|closes?)/i.test(title)) return null;
+    if (!title || isHoursEntry(title)) return null;
 
     const eventPath = href.replace(/^https?:\/\/[^/]+/, "");
     const sourceEventId = `${eventPath.replace(/^\/events\//, "").replace(/\//g, "-")}::${dateStr}`;

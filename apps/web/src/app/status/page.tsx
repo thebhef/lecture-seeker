@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import {
   RefreshCw,
+  Play,
   Clock,
   Database,
   AlertCircle,
@@ -37,6 +38,7 @@ interface SourceStatus {
 export default function StatusPage() {
   const [sources, setSources] = useState<SourceStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scrapingSlug, setScrapingSlug] = useState<string | null>(null);
 
   const fetchStatus = async () => {
     try {
@@ -63,6 +65,21 @@ export default function StatusPage() {
     }
     await fetchStatus();
     setLoading(false);
+  };
+
+  const triggerSourceScrape = async (slug: string) => {
+    setScrapingSlug(slug);
+    try {
+      const res = await fetch(`/api/scrape?source=${encodeURIComponent(slug)}`, { method: "POST" });
+      if (res.ok) {
+        const poll = setInterval(fetchStatus, 3000);
+        setTimeout(() => clearInterval(poll), 5 * 60 * 1000);
+      }
+    } catch {
+      // ignore
+    }
+    await fetchStatus();
+    setScrapingSlug(null);
   };
 
   const toggleEnabled = async (id: string, currentEnabled: boolean) => {
@@ -213,6 +230,18 @@ export default function StatusPage() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={() => triggerSourceScrape(source.slug)}
+                    disabled={scrapingSlug === source.slug || loading}
+                    className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+                    title="Scrape this source now"
+                  >
+                    {scrapingSlug === source.slug ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
+                  </button>
                   <button
                     onClick={() => clearSourceEvents(source.id)}
                     className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive"

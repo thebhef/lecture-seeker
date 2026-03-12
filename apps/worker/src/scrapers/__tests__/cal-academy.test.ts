@@ -66,6 +66,20 @@ const SAMPLE_DAY_HTML = makeDayHtml([
     location: "Entrance",
     description: "Cal Academy opens at 9:30 a.m.",
   },
+  {
+    time: "9:30 a.m.",
+    title: "The Cal Academy is open at 9:30 a.m.",
+    href: "/events/museum-hours/cal-academy-open",
+    location: "Entrance",
+    description: "",
+  },
+  {
+    time: "5 p.m.",
+    title: "The Cal Academy closes at 5",
+    href: "/events/museum-hours/cal-academy-closes",
+    location: "Entrance",
+    description: "",
+  },
 ]);
 
 const EMPTY_HTML = `<html><body><div class="view-daily-calendar"><div class="view-content"></div></div></body></html>`;
@@ -130,7 +144,7 @@ describe("CalAcademyScraper", () => {
     expect(pacificPart(lecture.startTime, "minute")).toBe(0);
   });
 
-  it("filters out museum opens/closes", async () => {
+  it("filters out operating-hours entries", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -142,6 +156,8 @@ describe("CalAcademyScraper", () => {
     const result = await scraper.scrape();
     const titles = result.events.map((e) => e.title);
     expect(titles.every((t) => !t.match(/museum\s+opens?/i))).toBe(true);
+    expect(titles.every((t) => !t.match(/cal academy\s+(is\s+)?(open|closes?)/i))).toBe(true);
+    expect(titles.every((t) => !t.match(/(opens?|closes?)\s+at\s+\d/i))).toBe(true);
   });
 
   it("infers event types from titles", async () => {
