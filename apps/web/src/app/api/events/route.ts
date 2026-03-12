@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { page, limit, startAfter, startBefore, sources, eventType, audience, location, isOnline, nights, weekends, q } = parsed.data;
+  const { page, limit, startAfter, startBefore, sources, eventType, audience, ageGroup, location, isOnline, nights, weekends, q } = parsed.data;
 
   const where: Prisma.EventWhereInput = {};
 
@@ -48,6 +48,27 @@ export async function GET(request: NextRequest) {
       where.audience = audienceList[0];
     } else if (audienceList.length > 1) {
       where.audience = { in: audienceList };
+    }
+  }
+
+  if (ageGroup) {
+    const ageGroupList = ageGroup.split(",").map((s) => s.trim()).filter(Boolean);
+    const hasUnlisted = ageGroupList.includes("_unlisted");
+    const named = ageGroupList.filter((v) => v !== "_unlisted");
+    if (hasUnlisted && named.length > 0) {
+      // Match named values OR null — use AND to avoid clobbering other OR clauses
+      where.AND = [...((where.AND as Prisma.EventWhereInput[]) || []),
+        { OR: [
+          { ageGroup: named.length === 1 ? named[0] : { in: named } },
+          { ageGroup: null },
+        ]},
+      ];
+    } else if (hasUnlisted) {
+      where.ageGroup = null;
+    } else if (named.length === 1) {
+      where.ageGroup = named[0];
+    } else if (named.length > 1) {
+      where.ageGroup = { in: named };
     }
   }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, normalizeEventType, AUDIENCE_TYPES, normalizeAudience, inferAudienceFromText } from "../constants";
+import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, normalizeEventType, AUDIENCE_TYPES, normalizeAudience, inferAudienceFromText, AGE_GROUP_TYPES, normalizeAgeGroup, inferAgeGroupFromText } from "../constants";
 
 describe("SOURCE_SLUGS", () => {
   it("contains all expected source slugs", () => {
@@ -188,6 +188,106 @@ describe("inferAudienceFromText", () => {
   it("returns undefined for null/undefined", () => {
     expect(inferAudienceFromText(undefined)).toBeUndefined();
     expect(inferAudienceFromText(null)).toBeUndefined();
+  });
+});
+
+describe("AGE_GROUP_TYPES", () => {
+  it("maps lowercase keys to display names", () => {
+    expect(AGE_GROUP_TYPES.children).toBe("Children");
+    expect(AGE_GROUP_TYPES.teens).toBe("Teens");
+    expect(AGE_GROUP_TYPES.families).toBe("Families");
+    expect(AGE_GROUP_TYPES.adults).toBe("Adults");
+    expect(AGE_GROUP_TYPES.seniors).toBe("Seniors");
+    expect(AGE_GROUP_TYPES.college).toBe("College Students");
+  });
+
+  it("has exactly 6 age group types", () => {
+    expect(Object.keys(AGE_GROUP_TYPES)).toHaveLength(6);
+  });
+});
+
+describe("normalizeAgeGroup", () => {
+  it("returns canonical keys as-is", () => {
+    expect(normalizeAgeGroup("children")).toBe("children");
+    expect(normalizeAgeGroup("teens")).toBe("teens");
+    expect(normalizeAgeGroup("families")).toBe("families");
+    expect(normalizeAgeGroup("adults")).toBe("adults");
+    expect(normalizeAgeGroup("seniors")).toBe("seniors");
+    expect(normalizeAgeGroup("college")).toBe("college");
+  });
+
+  it("normalizes known aliases", () => {
+    expect(normalizeAgeGroup("kids")).toBe("children");
+    expect(normalizeAgeGroup("Preschoolers")).toBe("children");
+    expect(normalizeAgeGroup("Young Adults")).toBe("teens");
+    expect(normalizeAgeGroup("family")).toBe("families");
+    expect(normalizeAgeGroup("family-friendly")).toBe("families");
+    expect(normalizeAgeGroup("all ages")).toBe("families");
+    expect(normalizeAgeGroup("senior")).toBe("seniors");
+    expect(normalizeAgeGroup("older adults")).toBe("seniors");
+    expect(normalizeAgeGroup("undergraduate")).toBe("college");
+    expect(normalizeAgeGroup("graduate students")).toBe("college");
+  });
+
+  it("is case-insensitive", () => {
+    expect(normalizeAgeGroup("CHILDREN")).toBe("children");
+    expect(normalizeAgeGroup("Teens")).toBe("teens");
+    expect(normalizeAgeGroup("KIDS")).toBe("children");
+  });
+
+  it("trims whitespace", () => {
+    expect(normalizeAgeGroup("  children  ")).toBe("children");
+    expect(normalizeAgeGroup(" families ")).toBe("families");
+  });
+
+  it("returns undefined for unrecognized strings", () => {
+    expect(normalizeAgeGroup("aliens")).toBeUndefined();
+    expect(normalizeAgeGroup("robots")).toBeUndefined();
+  });
+
+  it("returns undefined for null/undefined/empty", () => {
+    expect(normalizeAgeGroup(undefined)).toBeUndefined();
+    expect(normalizeAgeGroup(null)).toBeUndefined();
+    expect(normalizeAgeGroup("")).toBeUndefined();
+  });
+});
+
+describe("inferAgeGroupFromText", () => {
+  it("infers children from storytime", () => {
+    expect(inferAgeGroupFromText("Family Storytime for Kids")).toBe("children");
+  });
+
+  it("infers children from toddler", () => {
+    expect(inferAgeGroupFromText("Toddler Play Group")).toBe("children");
+  });
+
+  it("infers teens from teen night", () => {
+    expect(inferAgeGroupFromText("Teen Night at the Library")).toBe("teens");
+  });
+
+  it("infers families from family-friendly", () => {
+    expect(inferAgeGroupFromText("Family-Friendly Science Show")).toBe("families");
+  });
+
+  it("infers families from all ages", () => {
+    expect(inferAgeGroupFromText("Concert for all ages")).toBe("families");
+  });
+
+  it("infers adults from 21+", () => {
+    expect(inferAgeGroupFromText("NightLife Event 21+ Only")).toBe("adults");
+  });
+
+  it("infers seniors from older adults", () => {
+    expect(inferAgeGroupFromText("Technology Class for Older Adults")).toBe("seniors");
+  });
+
+  it("returns undefined when no keywords match", () => {
+    expect(inferAgeGroupFromText("Symphony Performance at Davies Hall")).toBeUndefined();
+  });
+
+  it("returns undefined for null/undefined", () => {
+    expect(inferAgeGroupFromText(undefined)).toBeUndefined();
+    expect(inferAgeGroupFromText(null)).toBeUndefined();
   });
 });
 

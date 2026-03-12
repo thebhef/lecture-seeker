@@ -9,6 +9,7 @@ export const eventQuerySchema = z.object({
   sources: z.string().optional(),
   eventType: z.string().optional(),
   audience: z.string().optional(),
+  ageGroup: z.string().optional(),
   location: z.string().optional(),
   isOnline: z
     .enum(["true", "false"])

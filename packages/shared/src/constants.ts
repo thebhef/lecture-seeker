@@ -276,3 +276,100 @@ export function inferAudienceFromText(
   }
   return undefined;
 }
+
+// ── Age group types ──────────────────────────────────────────────────
+export const AGE_GROUP_TYPES: Record<string, string> = {
+  children: "Children",
+  teens: "Teens",
+  families: "Families",
+  adults: "Adults",
+  seniors: "Seniors",
+  college: "College Students",
+};
+
+// Maps variant strings to canonical age group keys
+const AGE_GROUP_ALIASES: Record<string, string> = {
+  // children variants
+  kids: "children",
+  kid: "children",
+  child: "children",
+  preschoolers: "children",
+  preschool: "children",
+  toddler: "children",
+  toddlers: "children",
+  "young children": "children",
+  // teens variants
+  teen: "teens",
+  teenager: "teens",
+  teenagers: "teens",
+  "young adults": "teens",
+  "young adult": "teens",
+  "middle school": "teens",
+  "high school": "teens",
+  // families variants
+  family: "families",
+  "family-friendly": "families",
+  "all ages": "families",
+  // adults variants
+  adult: "adults",
+  // seniors variants
+  senior: "seniors",
+  "older adults": "seniors",
+  retired: "seniors",
+  // college variants
+  "college students": "college",
+  undergraduate: "college",
+  graduate: "college",
+  "graduate students": "college",
+  "undergraduate students": "college",
+};
+
+/**
+ * Normalizes an age group string to a canonical AGE_GROUP_TYPES key.
+ * Returns the canonical key if recognized, or undefined if the input
+ * doesn't match any known age group or alias.
+ */
+export function normalizeAgeGroup(
+  raw: string | undefined | null
+): string | undefined {
+  if (!raw) return undefined;
+  const lower = raw.trim().toLowerCase();
+  if (lower in AGE_GROUP_TYPES) return lower;
+  if (lower in AGE_GROUP_ALIASES) return AGE_GROUP_ALIASES[lower];
+  return undefined;
+}
+
+/**
+ * Infers age group from text content (title + description) using keyword matching.
+ * Returns a canonical age group key or undefined.
+ * Note: "college" is intentionally omitted — it is inferred from audience="students" instead.
+ */
+export function inferAgeGroupFromText(
+  text: string | undefined | null
+): string | undefined {
+  if (!text) return undefined;
+  const lower = text.toLowerCase();
+  // More specific patterns first
+  if (/\b(preschool|toddlers?|story\s*time|storytime|puppet|ages?\s*[0-5]\b)/.test(lower)) {
+    return "children";
+  }
+  if (/\b(children|kids)\b/.test(lower)) {
+    return "children";
+  }
+  if (/\b(teen\s*night|ages?\s*1[3-7][\s-]|middle\s+school|high\s+school)\b/.test(lower)) {
+    return "teens";
+  }
+  if (/\bteens?\b/.test(lower)) {
+    return "teens";
+  }
+  if (/\b(seniors?|older\s+adults|retired)\b|(?:55|65)\+/.test(lower)) {
+    return "seniors";
+  }
+  if (/\b(adults?\s+only)\b|(?:21|18)\+/.test(lower)) {
+    return "adults";
+  }
+  if (/\b(famil(?:y|ies)|family[\s-]friendly|all\s+ages)\b/.test(lower)) {
+    return "families";
+  }
+  return undefined;
+}

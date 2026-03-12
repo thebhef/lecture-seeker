@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType, normalizeAudience } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType, normalizeAudience, normalizeAgeGroup } from "@lecture-seeker/shared";
 
 const API_BASE =
   "https://gateway.bibliocommons.com/v2/libraries/smcl/events";
@@ -146,6 +146,18 @@ export class SanMateoLibraryScraper extends BaseScraper {
       }
     }
 
+    // Resolve age group from audienceIds
+    let ageGroup: string | undefined;
+    if (def.audienceIds?.length) {
+      for (const audId of def.audienceIds) {
+        const audEntity = audienceEntities[audId];
+        if (audEntity) {
+          ageGroup = normalizeAgeGroup(audEntity.name);
+          if (ageGroup) break;
+        }
+      }
+    }
+
     // Resolve location
     let location: string | undefined;
     let address: string | undefined;
@@ -190,6 +202,7 @@ export class SanMateoLibraryScraper extends BaseScraper {
       isOnline: false,
       eventType,
       audience,
+      ageGroup,
       subjects: [],
       rawData: event,
     };

@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType, inferAudienceFromText } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType, inferAudienceFromText, inferAgeGroupFromText } from "@lecture-seeker/shared";
 import ical from "node-ical";
 
 const ICS_URL =
@@ -72,6 +72,7 @@ export class CalStateLibraryScraper extends BaseScraper {
     const categories = this.extractCategories(vevent);
     const eventType = this.inferEventType(title, description, categories);
     const audience = inferAudienceFromText(`${title} ${description || ""}`);
+    const ageGroup = inferAgeGroupFromText(`${title} ${description || ""}`);
 
     const isOnline =
       /\b(virtual|webinar|online|zoom|teams)\b/i.test(
@@ -92,6 +93,7 @@ export class CalStateLibraryScraper extends BaseScraper {
       isOnline,
       eventType,
       audience,
+      ageGroup,
       subjects: categories,
       rawData: { uid, summary: vevent.summary },
     };

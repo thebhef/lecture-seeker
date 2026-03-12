@@ -19,6 +19,7 @@ export interface NormalizedEvent {
   isOnline: boolean;
   eventType?: string;
   audience?: string;
+  ageGroup?: string;
   subjects: string[];
   department?: string;
   rawData: unknown;

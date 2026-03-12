@@ -91,7 +91,7 @@ describe("CalAcademyScraper", () => {
     vi.restoreAllMocks();
     scraper = new CalAcademyScraper();
     // Skip crawl-delay sleeps in tests
-    vi.spyOn(scraper as never, "sleep").mockResolvedValue(undefined);
+    vi.spyOn(scraper as any, "sleep").mockResolvedValue(undefined);
   });
 
   it("has the correct source slug", () => {

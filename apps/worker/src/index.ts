@@ -15,7 +15,7 @@ import { SjsuScraper } from "./scrapers/sjsu";
 import { CalStateLibraryScraper } from "./scrapers/cal-state-library";
 import { SanMateoLibraryScraper } from "./scrapers/san-mateo-library";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
-import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType } from "@lecture-seeker/shared";
+import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType, normalizeAgeGroup, inferAgeGroupFromText } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
 
 const prisma = new PrismaClient();
@@ -127,6 +127,10 @@ async function scrapeSource(source: Source) {
           isOnline: event.isOnline,
           eventType: normalizeEventType(event.eventType),
           audience: normalizeAudience(event.audience),
+          ageGroup: normalizeAgeGroup(event.ageGroup)
+            || (normalizeAudience(event.audience) === "students" ? "college" : undefined)
+            || inferAgeGroupFromText(`${event.title} ${event.description || ""}`)
+            || null,
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,
@@ -151,6 +155,10 @@ async function scrapeSource(source: Source) {
           isOnline: event.isOnline,
           eventType: normalizeEventType(event.eventType),
           audience: normalizeAudience(event.audience),
+          ageGroup: normalizeAgeGroup(event.ageGroup)
+            || (normalizeAudience(event.audience) === "students" ? "college" : undefined)
+            || inferAgeGroupFromText(`${event.title} ${event.description || ""}`)
+            || null,
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,

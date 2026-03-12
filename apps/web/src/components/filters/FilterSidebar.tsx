@@ -6,6 +6,7 @@ import { SearchBar } from "./SearchBar";
 import { SourceFilter } from "./SourceFilter";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { AudienceFilter } from "./AudienceFilter";
+import { AgeGroupFilter } from "./AgeGroupFilter";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { QuickFilters } from "./QuickFilters";
 import { X, SlidersHorizontal } from "lucide-react";
@@ -16,6 +17,8 @@ interface FilterData {
   sources: { slug: string; name: string }[];
   locations: string[];
   audiences: string[];
+  ageGroups: string[];
+  hasUnlistedAgeGroup: boolean;
 }
 
 export function FilterSidebar() {
@@ -80,6 +83,7 @@ export function FilterSidebar() {
     searchParams.has("sources") ||
     searchParams.has("eventType") ||
     searchParams.has("audience") ||
+    searchParams.has("ageGroup") ||
     searchParams.has("location") ||
     searchParams.has("startAfter") ||
     searchParams.has("startBefore") ||
@@ -91,6 +95,7 @@ export function FilterSidebar() {
     searchParams.get("sources"),
     searchParams.get("eventType"),
     searchParams.get("audience"),
+    searchParams.get("ageGroup"),
     searchParams.get("startAfter"),
     searchParams.get("startBefore"),
     searchParams.get("nights"),
@@ -204,6 +209,32 @@ export function FilterSidebar() {
               )
             }
           />
+
+          {(filters.ageGroups.length > 0 || filters.hasUnlistedAgeGroup) && (() => {
+            const allAgeGroups = filters.hasUnlistedAgeGroup
+              ? [...filters.ageGroups, "_unlisted"]
+              : filters.ageGroups;
+            return (
+              <AgeGroupFilter
+                ageGroups={allAgeGroups}
+                selected={
+                  searchParams.has("ageGroup")
+                    ? searchParams.get("ageGroup")!.split(",").filter(Boolean)
+                    : [...allAgeGroups]
+                }
+                onChange={(ageGroups) =>
+                  updateParam(
+                    "ageGroup",
+                    ageGroups.length === allAgeGroups.length
+                      ? null
+                      : ageGroups.length > 0
+                        ? ageGroups.join(",")
+                        : ""
+                  )
+                }
+              />
+            );
+          })()}
         </>
       )}
 

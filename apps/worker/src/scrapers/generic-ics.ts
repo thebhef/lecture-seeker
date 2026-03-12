@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { inferAudienceFromText } from "@lecture-seeker/shared";
+import { inferAudienceFromText, inferAgeGroupFromText } from "@lecture-seeker/shared";
 import ical from "node-ical";
 
 export class GenericIcsScraper extends BaseScraper {
@@ -72,6 +72,9 @@ export class GenericIcsScraper extends BaseScraper {
     const audience = inferAudienceFromText(
       `${vevent.summary || ""} ${description || ""}`
     );
+    const ageGroup = inferAgeGroupFromText(
+      `${vevent.summary || ""} ${description || ""}`
+    );
 
     return {
       sourceEventId: uid,
@@ -86,6 +89,7 @@ export class GenericIcsScraper extends BaseScraper {
       isCanceled: false,
       isOnline: false,
       audience,
+      ageGroup,
       subjects: [],
       rawData: { uid, summary: vevent.summary },
     };

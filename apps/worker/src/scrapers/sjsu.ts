@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType, normalizeAudience } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType, normalizeAudience, normalizeAgeGroup } from "@lecture-seeker/shared";
 
 interface SjsuApiResponse {
   events: SjsuEvent[];
@@ -90,6 +90,7 @@ export class SjsuScraper extends BaseScraper {
     const eventType =
       normalizeEventType(e.filters?.event_types?.[0]?.name);
     const audience = normalizeAudience(e.filters?.event_target_audience?.[0]?.name);
+    const ageGroup = normalizeAgeGroup(e.filters?.event_target_audience?.[0]?.name);
     const subjects =
       e.filters?.event_topic?.map((s) => s.name) || [];
     const department = e.departments?.[0]?.name || undefined;
@@ -116,6 +117,7 @@ export class SjsuScraper extends BaseScraper {
         e.experience === "virtual" || e.experience === "hybrid",
       eventType,
       audience,
+      ageGroup,
       subjects,
       department,
       rawData: item,

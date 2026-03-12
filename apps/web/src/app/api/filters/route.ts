@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { normalizeAudience, normalizeEventType } from "@lecture-seeker/shared";
+import { normalizeAudience, normalizeEventType, normalizeAgeGroup } from "@lecture-seeker/shared";
 
 export async function GET() {
-  const [eventTypes, sources, locations, audiences] = await Promise.all([
+  const [eventTypes, sources, locations, audiences, ageGroups, unlistedAgeGroupCount] = await Promise.all([
     prisma.event.findMany({
       where: { eventType: { not: null } },
       select: { eventType: true },
@@ -28,6 +28,15 @@ export async function GET() {
       distinct: ["audience"],
       orderBy: { audience: "asc" },
     }),
+    prisma.event.findMany({
+      where: { ageGroup: { not: null } },
+      select: { ageGroup: true },
+      distinct: ["ageGroup"],
+      orderBy: { ageGroup: "asc" },
+    }),
+    prisma.event.count({
+      where: { ageGroup: null },
+    }),
   ]);
 
   return NextResponse.json({
@@ -41,5 +50,9 @@ export async function GET() {
     audiences: [...new Set(
       audiences.map((e) => normalizeAudience(e.audience)).filter(Boolean)
     )] as string[],
+    ageGroups: [...new Set(
+      ageGroups.map((e) => normalizeAgeGroup(e.ageGroup)).filter(Boolean)
+    )] as string[],
+    hasUnlistedAgeGroup: unlistedAgeGroupCount > 0,
   });
 }
