@@ -113,27 +113,6 @@ async function scrapeSource(source: Source) {
       ).map((e) => e.sourceEventId)
     );
 
-    // Classify events via LLM (only those without scraper-provided ageGroups)
-    const needsClassification = result.events.filter(
-      (e) => !e.ageGroups || e.ageGroups.length === 0
-    );
-
-    let llmClassifications: Map<string, string[]> | undefined;
-    if (needsClassification.length > 0) {
-      console.log(`  ${needsClassification.length}/${result.events.length} events need LLM age group classification`);
-      llmClassifications = await classifyAgeGroups(needsClassification);
-      const classified = [...llmClassifications.values()].filter(
-        (v) => v.length > 0
-      ).length;
-      if (llmClassifications.size > 0) {
-        console.log(
-          `  LLM classified ${classified}/${needsClassification.length} events with age groups`
-        );
-      }
-    } else {
-      console.log(`  All ${result.events.length} events have scraper-provided age groups, skipping LLM`);
-    }
-
     for (const event of result.events) {
       if (!existingIds.has(event.sourceEventId)) {
         newEvents++;
@@ -168,7 +147,7 @@ async function scrapeSource(source: Source) {
           isOnline: event.isOnline,
           eventType: normalizeEventType(event.eventType),
           audience: normalizeAudience(event.audience),
-          ageGroups: computeAgeGroups(event, llmClassifications),
+          ageGroups: computeAgeGroups(event),
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,
@@ -193,7 +172,7 @@ async function scrapeSource(source: Source) {
           isOnline: event.isOnline,
           eventType: normalizeEventType(event.eventType),
           audience: normalizeAudience(event.audience),
-          ageGroups: computeAgeGroups(event, llmClassifications),
+          ageGroups: computeAgeGroups(event),
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,
@@ -255,7 +234,50 @@ async function scrapeSources(slug?: string) {
   if (failures.length > 0) {
     console.warn(`  ${failures.length} scraper(s) had unhandled errors`);
   }
+
+  // Post-scrape LLM classification pass (sequential, no contention)
+  await classifyUntaggedEvents();
+
   console.log("--- Scrape run complete ---\n");
+}
+
+async function classifyUntaggedEvents() {
+  const untagged = await prisma.event.findMany({
+    where: { ageGroups: { isEmpty: true } },
+    select: { id: true, sourceEventId: true, title: true, description: true },
+  });
+
+  if (untagged.length === 0) {
+    console.log("LLM: no untagged events to classify");
+    return;
+  }
+
+  console.log(`LLM: classifying ${untagged.length} untagged events`);
+
+  const llmInput = untagged
+    .filter((e) => e.sourceEventId)
+    .map((e) => ({
+      sourceEventId: e.sourceEventId!,
+      title: e.title,
+      description: e.description ?? undefined,
+    }));
+
+  const classifications = await classifyAgeGroups(llmInput);
+
+  let updated = 0;
+  for (const event of untagged) {
+    if (!event.sourceEventId) continue;
+    const ageGroups = classifications.get(event.sourceEventId);
+    if (ageGroups && ageGroups.length > 0) {
+      await prisma.event.update({
+        where: { id: event.id },
+        data: { ageGroups },
+      });
+      updated++;
+    }
+  }
+
+  console.log(`LLM: updated ${updated}/${untagged.length} events with age groups`);
 }
 
 let scraping = false;

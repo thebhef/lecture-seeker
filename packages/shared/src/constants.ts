@@ -281,7 +281,7 @@ export function inferAudienceFromText(
 export const OLLAMA_DEFAULT_URL = "http://host.docker.internal:11434";
 export const OLLAMA_DEFAULT_MODEL = "gemma3:4b";
 export const OLLAMA_DEFAULT_BATCH_SIZE = 10;
-export const OLLAMA_DEFAULT_TIMEOUT_MS = 30000;
+export const OLLAMA_DEFAULT_TIMEOUT_MS = 120000;
 
 // ── Age group types ──────────────────────────────────────────────────
 export const AGE_GROUP_TYPES: Record<string, string> = {
