@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { page, limit, startAfter, startBefore, sources, eventType, audience, ageGroup, location, isOnline, nights, weekends, q } = parsed.data;
+  const { page, limit, startAfter, startBefore, sources, eventType, audience, ageGroups: ageGroupsParam, location, isOnline, nights, weekends, q } = parsed.data;
 
   const where: Prisma.EventWhereInput = {};
 
@@ -51,24 +51,22 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (ageGroup) {
-    const ageGroupList = ageGroup.split(",").map((s) => s.trim()).filter(Boolean);
+  if (ageGroupsParam) {
+    const ageGroupList = ageGroupsParam.split(",").map((s) => s.trim()).filter(Boolean);
     const hasUnlisted = ageGroupList.includes("_unlisted");
     const named = ageGroupList.filter((v) => v !== "_unlisted");
     if (hasUnlisted && named.length > 0) {
-      // Match named values OR null — use AND to avoid clobbering other OR clauses
+      // Match events that have any of the named groups OR have an empty array
       where.AND = [...((where.AND as Prisma.EventWhereInput[]) || []),
         { OR: [
-          { ageGroup: named.length === 1 ? named[0] : { in: named } },
-          { ageGroup: null },
+          { ageGroups: { hasSome: named } },
+          { ageGroups: { isEmpty: true } },
         ]},
       ];
     } else if (hasUnlisted) {
-      where.ageGroup = null;
-    } else if (named.length === 1) {
-      where.ageGroup = named[0];
-    } else if (named.length > 1) {
-      where.ageGroup = { in: named };
+      where.ageGroups = { isEmpty: true };
+    } else if (named.length > 0) {
+      where.ageGroups = { hasSome: named };
     }
   }
 

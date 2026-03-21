@@ -36,14 +36,14 @@ describe("eventQuerySchema", () => {
       sources: "stanford",
       eventType: "lecture",
       audience: "public",
-      ageGroup: "families",
+      ageGroups: "families",
       location: "Room 101",
       q: "astronomy",
     });
     expect(result.sources).toBe("stanford");
     expect(result.eventType).toBe("lecture");
     expect(result.audience).toBe("public");
-    expect(result.ageGroup).toBe("families");
+    expect(result.ageGroups).toBe("families");
     expect(result.location).toBe("Room 101");
     expect(result.q).toBe("astronomy");
   });
@@ -66,7 +66,7 @@ describe("eventQuerySchema", () => {
     expect(result.sources).toBeUndefined();
     expect(result.eventType).toBeUndefined();
     expect(result.audience).toBeUndefined();
-    expect(result.ageGroup).toBeUndefined();
+    expect(result.ageGroups).toBeUndefined();
     expect(result.q).toBeUndefined();
     expect(result.isOnline).toBeUndefined();
   });

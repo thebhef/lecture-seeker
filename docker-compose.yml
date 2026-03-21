@@ -44,6 +44,13 @@ services:
       DATABASE_URL: postgresql://lectureseeker:${DB_PASSWORD:-changeme}@db:5432/lectureseeker
       SCRAPE_INTERVAL_HOURS: ${SCRAPE_INTERVAL_HOURS:-6}
       WORKER_PORT: 3001
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:4b}
+      OLLAMA_ENABLED: ${OLLAMA_ENABLED:-true}
+      OLLAMA_BATCH_SIZE: ${OLLAMA_BATCH_SIZE:-10}
+      OLLAMA_TIMEOUT_MS: ${OLLAMA_TIMEOUT_MS:-30000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     expose:
       - "3001"
     depends_on:

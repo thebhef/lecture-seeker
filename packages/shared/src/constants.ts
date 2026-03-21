@@ -277,6 +277,12 @@ export function inferAudienceFromText(
   return undefined;
 }
 
+// ── Ollama classification defaults ──────────────────────────────────
+export const OLLAMA_DEFAULT_URL = "http://host.docker.internal:11434";
+export const OLLAMA_DEFAULT_MODEL = "gemma3:4b";
+export const OLLAMA_DEFAULT_BATCH_SIZE = 10;
+export const OLLAMA_DEFAULT_TIMEOUT_MS = 30000;
+
 // ── Age group types ──────────────────────────────────────────────────
 export const AGE_GROUP_TYPES: Record<string, string> = {
   children: "Children",
@@ -336,40 +342,5 @@ export function normalizeAgeGroup(
   const lower = raw.trim().toLowerCase();
   if (lower in AGE_GROUP_TYPES) return lower;
   if (lower in AGE_GROUP_ALIASES) return AGE_GROUP_ALIASES[lower];
-  return undefined;
-}
-
-/**
- * Infers age group from text content (title + description) using keyword matching.
- * Returns a canonical age group key or undefined.
- * Note: "college" is intentionally omitted — it is inferred from audience="students" instead.
- */
-export function inferAgeGroupFromText(
-  text: string | undefined | null
-): string | undefined {
-  if (!text) return undefined;
-  const lower = text.toLowerCase();
-  // More specific patterns first
-  if (/\b(preschool|toddlers?|story\s*time|storytime|puppet|ages?\s*[0-5]\b)/.test(lower)) {
-    return "children";
-  }
-  if (/\b(children|kids)\b/.test(lower)) {
-    return "children";
-  }
-  if (/\b(teen\s*night|ages?\s*1[3-7][\s-]|middle\s+school|high\s+school)\b/.test(lower)) {
-    return "teens";
-  }
-  if (/\bteens?\b/.test(lower)) {
-    return "teens";
-  }
-  if (/\b(seniors?|older\s+adults|retired)\b|(?:55|65)\+/.test(lower)) {
-    return "seniors";
-  }
-  if (/\b(adults?\s+only)\b|(?:21|18)\+/.test(lower)) {
-    return "adults";
-  }
-  if (/\b(famil(?:y|ies)|family[\s-]friendly|all\s+ages)\b/.test(lower)) {
-    return "families";
-  }
   return undefined;
 }

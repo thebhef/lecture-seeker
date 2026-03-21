@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { normalizeAudience, normalizeEventType, normalizeAgeGroup } from "@lecture-seeker/shared";
 
 export async function GET() {
-  const [eventTypes, sources, locations, audiences, ageGroups, unlistedAgeGroupCount] = await Promise.all([
+  const [eventTypes, sources, locations, audiences, ageGroupRows, unlistedAgeGroupCount] = await Promise.all([
     prisma.event.findMany({
       where: { eventType: { not: null } },
       select: { eventType: true },
@@ -28,14 +28,12 @@ export async function GET() {
       distinct: ["audience"],
       orderBy: { audience: "asc" },
     }),
-    prisma.event.findMany({
-      where: { ageGroup: { not: null } },
-      select: { ageGroup: true },
-      distinct: ["ageGroup"],
-      orderBy: { ageGroup: "asc" },
-    }),
+    // For array columns, query distinct values via raw SQL
+    prisma.$queryRaw<{ val: string }[]>`
+      SELECT DISTINCT unnest("ageGroups") AS val FROM "Event" ORDER BY val
+    `,
     prisma.event.count({
-      where: { ageGroup: null },
+      where: { ageGroups: { isEmpty: true } },
     }),
   ]);
 
@@ -51,7 +49,7 @@ export async function GET() {
       audiences.map((e) => normalizeAudience(e.audience)).filter(Boolean)
     )] as string[],
     ageGroups: [...new Set(
-      ageGroups.map((e) => normalizeAgeGroup(e.ageGroup)).filter(Boolean)
+      ageGroupRows.map((r) => normalizeAgeGroup(r.val)).filter(Boolean)
     )] as string[],
     hasUnlistedAgeGroup: unlistedAgeGroupCount > 0,
   });

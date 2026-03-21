@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType, inferAgeGroupFromText } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType } from "@lecture-seeker/shared";
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 import { pacificDate } from "./timezone";
@@ -289,7 +289,7 @@ export class CalAcademyScraper extends BaseScraper {
           isOnline: false,
           eventType,
           audience: "public",
-          ageGroup: inferAgeGroupFromText(`${title} ${description || ""}`),
+          ageGroups: [],
           subjects,
           rawData: { dateStr, timeText, href, location },
         });
@@ -337,7 +337,7 @@ export class CalAcademyScraper extends BaseScraper {
       isCanceled: false,
       isOnline: false,
       audience: "public",
-      ageGroup: inferAgeGroupFromText(`${title}`),
+      ageGroups: [],
       subjects: [],
       rawData: { dateStr, href },
     };

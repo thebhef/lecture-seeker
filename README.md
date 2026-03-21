@@ -50,6 +50,17 @@ lecture-seeker/
 
 Custom ICS feeds can be added through the Sources page in the UI.
 
+## Ollama Setup (Optional)
+
+The worker can use a local [Ollama](https://ollama.com) instance to classify events by age group (children, teens, families, adults, seniors, college).
+
+1. Install Ollama on the host machine and pull a model:
+   ```bash
+   ollama pull gemma3:4b
+   ```
+2. Ollama runs on `http://localhost:11434` by default. The Docker worker reaches it via `host.docker.internal:11434` (configured automatically in `docker-compose.yml`).
+3. Set `OLLAMA_ENABLED=false` in `.env` to disable. When Ollama is unavailable, scrapes proceed normally without classification.
+
 ## Environment Variables
 
 Copy `.env.example` to `.env`. See that file for all available options. At minimum you need `DATABASE_URL` (pre-configured for the Docker Compose database). SMTP variables are optional — leave `SMTP_HOST` empty to disable email.

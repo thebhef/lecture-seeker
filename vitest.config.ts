@@ -10,7 +10,7 @@ export default defineConfig({
       provider: "v8",
       include: [
         "packages/shared/src/**/*.ts",
-        "apps/worker/src/scrapers/**/*.ts",
+        "apps/worker/src/**/*.ts",
         "apps/web/src/lib/**/*.ts",
       ],
       exclude: ["**/*.test.ts", "**/index.ts"],

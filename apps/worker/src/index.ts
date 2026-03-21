@@ -15,10 +15,30 @@ import { SjsuScraper } from "./scrapers/sjsu";
 import { CalStateLibraryScraper } from "./scrapers/cal-state-library";
 import { SanMateoLibraryScraper } from "./scrapers/san-mateo-library";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
-import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType, normalizeAgeGroup, inferAgeGroupFromText } from "@lecture-seeker/shared";
+import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType, normalizeAgeGroup } from "@lecture-seeker/shared";
+import type { NormalizedEvent } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
+import { classifyAgeGroups } from "./ollama";
 
 const prisma = new PrismaClient();
+
+function computeAgeGroups(
+  event: NormalizedEvent,
+  llmClassifications?: Map<string, string[]>
+): string[] {
+  // Use scraper-provided age groups if present
+  if (event.ageGroups && event.ageGroups.length > 0) {
+    const normalized = event.ageGroups
+      .map((g) => normalizeAgeGroup(g))
+      .filter((g): g is string => !!g);
+    if (normalized.length > 0) return [...new Set(normalized)];
+  }
+  // Otherwise use LLM classification
+  if (llmClassifications?.has(event.sourceEventId)) {
+    return llmClassifications.get(event.sourceEventId) ?? [];
+  }
+  return [];
+}
 
 function getScraperForSource(source: Source): BaseScraper {
   switch (source.slug) {
@@ -93,6 +113,27 @@ async function scrapeSource(source: Source) {
       ).map((e) => e.sourceEventId)
     );
 
+    // Classify events via LLM (only those without scraper-provided ageGroups)
+    const needsClassification = result.events.filter(
+      (e) => !e.ageGroups || e.ageGroups.length === 0
+    );
+
+    let llmClassifications: Map<string, string[]> | undefined;
+    if (needsClassification.length > 0) {
+      console.log(`  ${needsClassification.length}/${result.events.length} events need LLM age group classification`);
+      llmClassifications = await classifyAgeGroups(needsClassification);
+      const classified = [...llmClassifications.values()].filter(
+        (v) => v.length > 0
+      ).length;
+      if (llmClassifications.size > 0) {
+        console.log(
+          `  LLM classified ${classified}/${needsClassification.length} events with age groups`
+        );
+      }
+    } else {
+      console.log(`  All ${result.events.length} events have scraper-provided age groups, skipping LLM`);
+    }
+
     for (const event of result.events) {
       if (!existingIds.has(event.sourceEventId)) {
         newEvents++;
@@ -127,10 +168,7 @@ async function scrapeSource(source: Source) {
           isOnline: event.isOnline,
           eventType: normalizeEventType(event.eventType),
           audience: normalizeAudience(event.audience),
-          ageGroup: normalizeAgeGroup(event.ageGroup)
-            || (normalizeAudience(event.audience) === "students" ? "college" : undefined)
-            || inferAgeGroupFromText(`${event.title} ${event.description || ""}`)
-            || null,
+          ageGroups: computeAgeGroups(event, llmClassifications),
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,
@@ -155,10 +193,7 @@ async function scrapeSource(source: Source) {
           isOnline: event.isOnline,
           eventType: normalizeEventType(event.eventType),
           audience: normalizeAudience(event.audience),
-          ageGroup: normalizeAgeGroup(event.ageGroup)
-            || (normalizeAudience(event.audience) === "students" ? "college" : undefined)
-            || inferAgeGroupFromText(`${event.title} ${event.description || ""}`)
-            || null,
+          ageGroups: computeAgeGroups(event, llmClassifications),
           subjects: event.subjects,
           department: event.department,
           rawData: event.rawData as any,

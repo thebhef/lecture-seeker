@@ -57,7 +57,7 @@ model Event {
   isOnline        Boolean  @default(false)
   eventType       String?
   audience        String?
-  ageGroup        String?
+  ageGroups       String[]
   subjects        String[]
   department      String?
   rawData         Json?
@@ -69,6 +69,6 @@ model Event {
   @@index([sourceId])
   @@index([eventType])
   @@index([audience])
-  @@index([ageGroup])
+  @@index([ageGroups])
   @@index([location])
 }

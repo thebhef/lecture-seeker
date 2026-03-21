@@ -146,14 +146,14 @@ export class SanMateoLibraryScraper extends BaseScraper {
       }
     }
 
-    // Resolve age group from audienceIds
-    let ageGroup: string | undefined;
+    // Resolve age groups from audienceIds (can have multiple)
+    const ageGroups: string[] = [];
     if (def.audienceIds?.length) {
       for (const audId of def.audienceIds) {
         const audEntity = audienceEntities[audId];
         if (audEntity) {
-          ageGroup = normalizeAgeGroup(audEntity.name);
-          if (ageGroup) break;
+          const ag = normalizeAgeGroup(audEntity.name);
+          if (ag && !ageGroups.includes(ag)) ageGroups.push(ag);
         }
       }
     }
@@ -202,7 +202,7 @@ export class SanMateoLibraryScraper extends BaseScraper {
       isOnline: false,
       eventType,
       audience,
-      ageGroup,
+      ageGroups,
       subjects: [],
       rawData: event,
     };

@@ -95,12 +95,12 @@ export function EventDetail({ event, onClose }: EventDetailProps) {
                 {AUDIENCE_TYPES[event.audience] || event.audience}
               </span>
             )}
-            {event.ageGroup && (
-              <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+            {event.ageGroups?.length > 0 && event.ageGroups.map((ag) => (
+              <span key={ag} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                 <Users className="h-3 w-3" />
-                {AGE_GROUP_TYPES[event.ageGroup] || event.ageGroup}
+                {AGE_GROUP_TYPES[ag] || ag}
               </span>
-            )}
+            ))}
             {event.department && (
               <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                 <Building className="h-3 w-3" />

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, normalizeEventType, AUDIENCE_TYPES, normalizeAudience, inferAudienceFromText, AGE_GROUP_TYPES, normalizeAgeGroup, inferAgeGroupFromText } from "../constants";
+import { SOURCE_SLUGS, BUILT_IN_SOURCES, EVENT_TYPES, normalizeEventType, AUDIENCE_TYPES, normalizeAudience, inferAudienceFromText, AGE_GROUP_TYPES, normalizeAgeGroup } from "../constants";
 
 describe("SOURCE_SLUGS", () => {
   it("contains all expected source slugs", () => {
@@ -252,42 +252,4 @@ describe("normalizeAgeGroup", () => {
   });
 });
 
-describe("inferAgeGroupFromText", () => {
-  it("infers children from storytime", () => {
-    expect(inferAgeGroupFromText("Family Storytime for Kids")).toBe("children");
-  });
-
-  it("infers children from toddler", () => {
-    expect(inferAgeGroupFromText("Toddler Play Group")).toBe("children");
-  });
-
-  it("infers teens from teen night", () => {
-    expect(inferAgeGroupFromText("Teen Night at the Library")).toBe("teens");
-  });
-
-  it("infers families from family-friendly", () => {
-    expect(inferAgeGroupFromText("Family-Friendly Science Show")).toBe("families");
-  });
-
-  it("infers families from all ages", () => {
-    expect(inferAgeGroupFromText("Concert for all ages")).toBe("families");
-  });
-
-  it("infers adults from 21+", () => {
-    expect(inferAgeGroupFromText("NightLife Event 21+ Only")).toBe("adults");
-  });
-
-  it("infers seniors from older adults", () => {
-    expect(inferAgeGroupFromText("Technology Class for Older Adults")).toBe("seniors");
-  });
-
-  it("returns undefined when no keywords match", () => {
-    expect(inferAgeGroupFromText("Symphony Performance at Davies Hall")).toBeUndefined();
-  });
-
-  it("returns undefined for null/undefined", () => {
-    expect(inferAgeGroupFromText(undefined)).toBeUndefined();
-    expect(inferAgeGroupFromText(null)).toBeUndefined();
-  });
-});
 

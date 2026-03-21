@@ -90,7 +90,8 @@ export class StanfordScraper extends BaseScraper {
     const eventType =
       normalizeEventType(e.filters?.event_types?.[0]?.name);
     const audience = normalizeAudience(e.filters?.event_audience?.[0]?.name);
-    const ageGroup = normalizeAgeGroup(e.filters?.event_audience?.[0]?.name);
+    const ageGroupVal = normalizeAgeGroup(e.filters?.event_audience?.[0]?.name);
+    const ageGroups = ageGroupVal ? [ageGroupVal] : [];
     const subjects =
       e.filters?.event_subject?.map((s) => s.name) || [];
     const department = e.departments?.[0]?.name || undefined;
@@ -117,7 +118,7 @@ export class StanfordScraper extends BaseScraper {
         e.experience === "virtual" || e.experience === "hybrid",
       eventType,
       audience,
-      ageGroup,
+      ageGroups,
       subjects,
       department,
       rawData: item,

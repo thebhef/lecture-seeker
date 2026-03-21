@@ -83,7 +83,7 @@ export function FilterSidebar() {
     searchParams.has("sources") ||
     searchParams.has("eventType") ||
     searchParams.has("audience") ||
-    searchParams.has("ageGroup") ||
+    searchParams.has("ageGroups") ||
     searchParams.has("location") ||
     searchParams.has("startAfter") ||
     searchParams.has("startBefore") ||
@@ -95,7 +95,7 @@ export function FilterSidebar() {
     searchParams.get("sources"),
     searchParams.get("eventType"),
     searchParams.get("audience"),
-    searchParams.get("ageGroup"),
+    searchParams.get("ageGroups"),
     searchParams.get("startAfter"),
     searchParams.get("startBefore"),
     searchParams.get("nights"),
@@ -218,13 +218,13 @@ export function FilterSidebar() {
               <AgeGroupFilter
                 ageGroups={allAgeGroups}
                 selected={
-                  searchParams.has("ageGroup")
-                    ? searchParams.get("ageGroup")!.split(",").filter(Boolean)
+                  searchParams.has("ageGroups")
+                    ? searchParams.get("ageGroups")!.split(",").filter(Boolean)
                     : [...allAgeGroups]
                 }
                 onChange={(ageGroups) =>
                   updateParam(
-                    "ageGroup",
+                    "ageGroups",
                     ageGroups.length === allAgeGroups.length
                       ? null
                       : ageGroups.length > 0

@@ -1,6 +1,6 @@
 import { BaseScraper } from "./base";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
-import { SOURCE_SLUGS, normalizeEventType, inferAudienceFromText, inferAgeGroupFromText } from "@lecture-seeker/shared";
+import { SOURCE_SLUGS, normalizeEventType, inferAudienceFromText } from "@lecture-seeker/shared";
 
 interface BerkeleyApiResponse {
   meta: { total_pages: number; page: number };
@@ -95,9 +95,6 @@ export class UCBerkeleyScraper extends BaseScraper {
     const audience = inferAudienceFromText(
       `${title} ${event.summary || ""} ${event.description || ""}`
     );
-    const ageGroup = inferAgeGroupFromText(
-      `${title} ${event.summary || ""} ${event.description || ""}`
-    );
 
     return {
       sourceEventId: String(event.id),
@@ -115,7 +112,6 @@ export class UCBerkeleyScraper extends BaseScraper {
       isOnline: event.is_online === 1,
       eventType,
       audience,
-      ageGroup,
       subjects: [],
       rawData: event,
     };
