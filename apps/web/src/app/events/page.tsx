@@ -23,6 +23,18 @@ const CalendarView = dynamic(
     ),
   }
 );
+
+const MapView = dynamic(
+  () => import("@/components/map/MapView").then((m) => m.MapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+);
 import type { EventWithSource } from "@/lib/types";
 
 interface PaginatedResponse {
@@ -39,13 +51,15 @@ function EventsContent() {
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [calendarMounted, setCalendarMounted] = useState(false);
+  const [mapMounted, setMapMounted] = useState(false);
   const [response, setResponse] = useState<PaginatedResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventWithSource | null>(null);
 
-  // Once calendar view is activated, keep it mounted to preserve FullCalendar state
+  // Once calendar/map view is activated, keep it mounted to preserve state
   useEffect(() => {
     if (viewMode === "calendar") setCalendarMounted(true);
+    if (viewMode === "map") setMapMounted(true);
   }, [viewMode]);
 
   const fetchEvents = useCallback(async () => {
@@ -113,6 +127,11 @@ function EventsContent() {
                 <CalendarView events={events} onSelect={setSelectedEvent} />
               </div>
             )}
+            {mapMounted && (
+              <div style={{ display: viewMode === "map" ? "block" : "none" }}>
+                <MapView events={events} onSelect={setSelectedEvent} />
+              </div>
+            )}
             {viewMode === "grid" && (
               <EventGrid events={events} onSelect={setSelectedEvent} />
             )}
@@ -123,7 +142,7 @@ function EventsContent() {
             {/* Pagination (not shown in calendar mode) */}
             {pagination &&
               pagination.totalPages > 1 &&
-              viewMode !== "calendar" && (
+              viewMode !== "calendar" && viewMode !== "map" && (
                 <div className="mt-4 flex items-center justify-center gap-2">
                   <a
                     href={`/events?${buildPageParams(searchParams, pagination.page - 1)}`}

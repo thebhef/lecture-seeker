@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { API_DEFAULT_LIMIT, API_MAX_LIMIT } from "./constants";
+import { API_DEFAULT_LIMIT, API_MAX_LIMIT, MAP_MAX_RADIUS_MILES } from "./constants";
 
 export const eventQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -24,6 +24,10 @@ export const eventQuerySchema = z.object({
     .transform((v) => v === "true")
     .optional(),
   q: z.string().optional(),
+  // Geographic radius filter
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  radius: z.coerce.number().min(1).max(MAP_MAX_RADIUS_MILES).optional(),
 });
 
 export type EventQuery = z.infer<typeof eventQuerySchema>;

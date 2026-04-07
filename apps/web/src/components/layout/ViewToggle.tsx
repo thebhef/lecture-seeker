@@ -1,8 +1,8 @@
 "use client";
 
-import { Calendar, List, LayoutGrid } from "lucide-react";
+import { Calendar, List, LayoutGrid, MapPin } from "lucide-react";
 
-export type ViewMode = "calendar" | "list" | "grid";
+export type ViewMode = "calendar" | "list" | "grid" | "map";
 
 interface ViewToggleProps {
   value: ViewMode;
@@ -14,6 +14,7 @@ export function ViewToggle({ value, onChange }: ViewToggleProps) {
     { mode: "calendar", icon: <Calendar className="h-4 w-4" />, label: "Calendar" },
     { mode: "list", icon: <List className="h-4 w-4" />, label: "List" },
     { mode: "grid", icon: <LayoutGrid className="h-4 w-4" />, label: "Grid" },
+    { mode: "map", icon: <MapPin className="h-4 w-4" />, label: "Map" },
   ];
 
   return (

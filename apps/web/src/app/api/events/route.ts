@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { page, limit, startAfter, startBefore, sources, eventType, audience, ageGroups: ageGroupsParam, location, isOnline, nights, weekends, q } = parsed.data;
+  const { page, limit, startAfter, startBefore, sources, eventType, audience, ageGroups: ageGroupsParam, location, isOnline, nights, weekends, q, latitude, longitude, radius } = parsed.data;
 
   const where: Prisma.EventWhereInput = {};
 
@@ -86,6 +86,33 @@ export async function GET(request: NextRequest) {
     ];
   }
 
+  // Geographic radius filter using Haversine formula in raw SQL
+  if (latitude !== undefined && longitude !== undefined && radius !== undefined) {
+    const radiusKm = radius * 1.60934; // miles to km
+    const geoIds = await prisma.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT "id" FROM "Event"
+       WHERE "latitude" IS NOT NULL AND "longitude" IS NOT NULL
+         AND (
+           6371 * acos(
+             LEAST(1.0, cos(radians($1)) * cos(radians("latitude"))
+             * cos(radians("longitude") - radians($2))
+             + sin(radians($1)) * sin(radians("latitude")))
+           )
+         ) <= $3`,
+      latitude,
+      longitude,
+      radiusKm,
+    );
+    const geoIdSet = geoIds.map((r) => r.id);
+    if (where.id) {
+      // Intersect with existing ID filter (e.g. from nights/weekends)
+      const existing = new Set((where.id as { in: string[] }).in);
+      where.id = { in: geoIdSet.filter((id) => existing.has(id)) };
+    } else {
+      where.id = { in: geoIdSet };
+    }
+  }
+
   // Time-of-day and day-of-week filters require raw SQL (Prisma can't EXTRACT).
   // Get matching IDs first, then add to the Prisma where clause.
   // Column is timestamptz so a single AT TIME ZONE converts to Pacific local time.
@@ -106,7 +133,14 @@ export async function GET(request: NextRequest) {
     const ids = await prisma.$queryRawUnsafe<{ id: string }[]>(
       `SELECT "id" FROM "Event" WHERE ${conditions.join(" AND ")}`
     );
-    where.id = { in: ids.map((r) => r.id) };
+    const timeIds = ids.map((r) => r.id);
+    if (where.id) {
+      // Intersect with existing ID filter (e.g. from geo radius)
+      const existing = new Set((where.id as { in: string[] }).in);
+      where.id = { in: timeIds.filter((id) => existing.has(id)) };
+    } else {
+      where.id = { in: timeIds };
+    }
   }
 
   const [events, total] = await Promise.all([

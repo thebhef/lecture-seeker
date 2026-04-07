@@ -19,6 +19,7 @@ import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType, normalizeAgeGr
 import type { NormalizedEvent } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
 import { classifyAgeGroups } from "./ollama";
+import { geocodeUnmappedEvents } from "./geocode";
 
 const prisma = new PrismaClient();
 
@@ -237,6 +238,9 @@ async function scrapeSources(slug?: string) {
 
   // Post-scrape LLM classification pass (sequential, no contention)
   await classifyUntaggedEvents();
+
+  // Post-scrape geocoding pass for events missing coordinates
+  await geocodeUnmappedEvents(prisma);
 
   console.log("--- Scrape run complete ---\n");
 }

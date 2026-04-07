@@ -9,6 +9,7 @@ import { AudienceFilter } from "./AudienceFilter";
 import { AgeGroupFilter } from "./AgeGroupFilter";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { QuickFilters } from "./QuickFilters";
+import { LocationFilter } from "./LocationFilter";
 import { X, SlidersHorizontal } from "lucide-react";
 import { DEFAULT_START_HOUR } from "@lecture-seeker/shared";
 
@@ -85,6 +86,7 @@ export function FilterSidebar() {
     searchParams.has("audience") ||
     searchParams.has("ageGroups") ||
     searchParams.has("location") ||
+    searchParams.has("latitude") ||
     searchParams.has("startAfter") ||
     searchParams.has("startBefore") ||
     searchParams.has("nights") ||
@@ -96,6 +98,7 @@ export function FilterSidebar() {
     searchParams.get("eventType"),
     searchParams.get("audience"),
     searchParams.get("ageGroups"),
+    searchParams.get("latitude"),
     searchParams.get("startAfter"),
     searchParams.get("startBefore"),
     searchParams.get("nights"),
@@ -138,6 +141,26 @@ export function FilterSidebar() {
         weekends={searchParams.get("weekends") === "true"}
         onNightsChange={(v) => updateParam("nights", v ? "true" : null)}
         onWeekendsChange={(v) => updateParam("weekends", v ? "true" : null)}
+      />
+
+      <LocationFilter
+        latitude={searchParams.get("latitude") || ""}
+        longitude={searchParams.get("longitude") || ""}
+        radius={searchParams.get("radius") || ""}
+        onGeoChange={(lat, lng, r) => {
+          const params = new URLSearchParams(searchParams.toString());
+          if (lat !== null && lng !== null && r !== null) {
+            params.set("latitude", lat);
+            params.set("longitude", lng);
+            params.set("radius", r);
+          } else {
+            params.delete("latitude");
+            params.delete("longitude");
+            params.delete("radius");
+          }
+          params.delete("page");
+          router.push(`/events?${params.toString()}`);
+        }}
       />
 
       <DateRangeFilter

@@ -277,6 +277,13 @@ export function inferAudienceFromText(
   return undefined;
 }
 
+// ── Map defaults ──────────────────────────────────────────────────
+// Center of the Bay Area (approximately San Mateo Bridge midpoint)
+export const MAP_DEFAULT_CENTER = { lat: 37.55, lng: -122.1 } as const;
+export const MAP_DEFAULT_ZOOM = 10;
+export const MAP_DEFAULT_RADIUS_MILES = 50;
+export const MAP_MAX_RADIUS_MILES = 100;
+
 // ── Ollama classification defaults ──────────────────────────────────
 export const OLLAMA_DEFAULT_URL = "http://host.docker.internal:11434";
 export const OLLAMA_DEFAULT_MODEL = "gemma3:4b";
