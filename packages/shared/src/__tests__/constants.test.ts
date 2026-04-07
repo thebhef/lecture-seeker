@@ -201,8 +201,8 @@ describe("AGE_GROUP_TYPES", () => {
     expect(AGE_GROUP_TYPES.college).toBe("College Students");
   });
 
-  it("has exactly 6 age group types", () => {
-    expect(Object.keys(AGE_GROUP_TYPES)).toHaveLength(6);
+  it("has exactly 7 age group types", () => {
+    expect(Object.keys(AGE_GROUP_TYPES)).toHaveLength(7);
   });
 });
 

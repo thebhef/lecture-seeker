@@ -15,7 +15,7 @@ import { SjsuScraper } from "./scrapers/sjsu";
 import { CalStateLibraryScraper } from "./scrapers/cal-state-library";
 import { SanMateoLibraryScraper } from "./scrapers/san-mateo-library";
 import { GenericIcsScraper } from "./scrapers/generic-ics";
-import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType, normalizeAgeGroup } from "@lecture-seeker/shared";
+import { BUILT_IN_SOURCES, normalizeAudience, normalizeEventType, normalizeAgeGroup, AGE_GROUP_UNCLASSIFIED } from "@lecture-seeker/shared";
 import type { NormalizedEvent } from "@lecture-seeker/shared";
 import type { BaseScraper } from "./scrapers/base";
 import { classifyAgeGroups } from "./ollama";
@@ -93,9 +93,10 @@ async function seedSources() {
   console.log("Built-in sources seeded");
 }
 
-async function scrapeSource(source: Source) {
+async function scrapeSource(source: Source): Promise<string[]> {
   console.log(`Scraping: ${source.name} (${source.slug})`);
   const startTime = Date.now();
+  const newEventIds: string[] = [];
 
   try {
     const scraper = getScraperForSource(source);
@@ -115,11 +116,12 @@ async function scrapeSource(source: Source) {
     );
 
     for (const event of result.events) {
-      if (!existingIds.has(event.sourceEventId)) {
+      const isNew = !existingIds.has(event.sourceEventId);
+      if (isNew) {
         newEvents++;
       }
 
-      await prisma.event.upsert({
+      const { id: rowId } = await prisma.event.upsert({
         where: {
           sourceId_sourceEventId: {
             sourceId: source.id,
@@ -179,6 +181,7 @@ async function scrapeSource(source: Source) {
           rawData: event.rawData as any,
         },
       });
+      if (isNew) newEventIds.push(rowId);
       upserted++;
     }
 
@@ -202,6 +205,8 @@ async function scrapeSource(source: Source) {
         totalEvents,
       },
     });
+
+    return newEventIds;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`  Error scraping ${source.name}: ${message}`);
@@ -209,6 +214,7 @@ async function scrapeSource(source: Source) {
       where: { id: source.id },
       data: { lastError: message },
     });
+    return [];
   }
 }
 
@@ -236,8 +242,13 @@ async function scrapeSources(slug?: string) {
     console.warn(`  ${failures.length} scraper(s) had unhandled errors`);
   }
 
-  // Post-scrape LLM classification pass (sequential, no contention)
-  await classifyUntaggedEvents();
+  // Collect IDs of newly created events across all scrapers
+  const newEventIds = results
+    .filter((r): r is PromiseFulfilledResult<string[]> => r.status === "fulfilled")
+    .flatMap((r) => r.value);
+
+  // Post-scrape LLM classification pass — only new events
+  await classifyUntaggedEvents(newEventIds);
 
   // Post-scrape geocoding pass for events missing coordinates
   await geocodeUnmappedEvents(prisma);
@@ -245,18 +256,27 @@ async function scrapeSources(slug?: string) {
   console.log("--- Scrape run complete ---\n");
 }
 
-async function classifyUntaggedEvents() {
+async function classifyUntaggedEvents(newEventIds: string[]) {
+  if (newEventIds.length === 0) {
+    console.log("LLM: no new events to classify");
+    return;
+  }
+
+  // Only classify new events that don't already have scraper-provided age groups
   const untagged = await prisma.event.findMany({
-    where: { ageGroups: { isEmpty: true } },
+    where: {
+      id: { in: newEventIds },
+      ageGroups: { isEmpty: true },
+    },
     select: { id: true, sourceEventId: true, title: true, description: true },
   });
 
   if (untagged.length === 0) {
-    console.log("LLM: no untagged events to classify");
+    console.log("LLM: all new events already have age groups");
     return;
   }
 
-  console.log(`LLM: classifying ${untagged.length} untagged events`);
+  console.log(`LLM: classifying ${untagged.length} new events (of ${newEventIds.length} total new)`);
 
   const llmInput = untagged
     .filter((e) => e.sourceEventId)
@@ -268,7 +288,8 @@ async function classifyUntaggedEvents() {
 
   const classifications = await classifyAgeGroups(llmInput);
 
-  let updated = 0;
+  let classified = 0;
+  let unclassified = 0;
   for (const event of untagged) {
     if (!event.sourceEventId) continue;
     const ageGroups = classifications.get(event.sourceEventId);
@@ -277,11 +298,18 @@ async function classifyUntaggedEvents() {
         where: { id: event.id },
         data: { ageGroups },
       });
-      updated++;
+      classified++;
+    } else {
+      // Mark as unclassified so we don't retry on future scrape cycles
+      await prisma.event.update({
+        where: { id: event.id },
+        data: { ageGroups: [AGE_GROUP_UNCLASSIFIED] },
+      });
+      unclassified++;
     }
   }
 
-  console.log(`LLM: updated ${updated}/${untagged.length} events with age groups`);
+  console.log(`LLM: ${classified} classified, ${unclassified} marked unclassified`);
 }
 
 let scraping = false;

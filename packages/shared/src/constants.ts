@@ -291,7 +291,11 @@ export const OLLAMA_DEFAULT_BATCH_SIZE = 10;
 export const OLLAMA_DEFAULT_TIMEOUT_MS = 120000;
 
 // ── Age group types ──────────────────────────────────────────────────
+// Sentinel value for events the LLM could not classify — prevents re-querying
+export const AGE_GROUP_UNCLASSIFIED = "unclassified";
+
 export const AGE_GROUP_TYPES: Record<string, string> = {
+  [AGE_GROUP_UNCLASSIFIED]: "Unclassified",
   children: "Children",
   teens: "Teens",
   families: "Families",

@@ -61,7 +61,7 @@ export function AgeGroupFilter({ ageGroups, selected, onChange }: AgeGroupFilter
                   className="h-4 w-4 shrink-0 rounded border-border accent-primary"
                 />
                 <span className={`truncate ${isChecked ? "text-primary font-medium" : "text-muted-foreground"}`}>
-                  {ag === "_unlisted" ? "Not Listed" : (AGE_GROUP_TYPES[ag] || ag)}
+                  {AGE_GROUP_TYPES[ag] || ag}
                 </span>
               </label>
               <button

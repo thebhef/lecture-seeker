@@ -19,7 +19,6 @@ interface FilterData {
   locations: string[];
   audiences: string[];
   ageGroups: string[];
-  hasUnlistedAgeGroup: boolean;
 }
 
 export function FilterSidebar() {
@@ -233,22 +232,18 @@ export function FilterSidebar() {
             }
           />
 
-          {(filters.ageGroups.length > 0 || filters.hasUnlistedAgeGroup) && (() => {
-            const allAgeGroups = filters.hasUnlistedAgeGroup
-              ? [...filters.ageGroups, "_unlisted"]
-              : filters.ageGroups;
-            return (
+          {filters.ageGroups.length > 0 && (
               <AgeGroupFilter
-                ageGroups={allAgeGroups}
+                ageGroups={filters.ageGroups}
                 selected={
                   searchParams.has("ageGroups")
                     ? searchParams.get("ageGroups")!.split(",").filter(Boolean)
-                    : [...allAgeGroups]
+                    : [...filters.ageGroups]
                 }
                 onChange={(ageGroups) =>
                   updateParam(
                     "ageGroups",
-                    ageGroups.length === allAgeGroups.length
+                    ageGroups.length === filters.ageGroups.length
                       ? null
                       : ageGroups.length > 0
                         ? ageGroups.join(",")
@@ -256,8 +251,7 @@ export function FilterSidebar() {
                   )
                 }
               />
-            );
-          })()}
+          )}
         </>
       )}
 

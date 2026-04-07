@@ -53,20 +53,8 @@ export async function GET(request: NextRequest) {
 
   if (ageGroupsParam) {
     const ageGroupList = ageGroupsParam.split(",").map((s) => s.trim()).filter(Boolean);
-    const hasUnlisted = ageGroupList.includes("_unlisted");
-    const named = ageGroupList.filter((v) => v !== "_unlisted");
-    if (hasUnlisted && named.length > 0) {
-      // Match events that have any of the named groups OR have an empty array
-      where.AND = [...((where.AND as Prisma.EventWhereInput[]) || []),
-        { OR: [
-          { ageGroups: { hasSome: named } },
-          { ageGroups: { isEmpty: true } },
-        ]},
-      ];
-    } else if (hasUnlisted) {
-      where.ageGroups = { isEmpty: true };
-    } else if (named.length > 0) {
-      where.ageGroups = { hasSome: named };
+    if (ageGroupList.length > 0) {
+      where.ageGroups = { hasSome: ageGroupList };
     }
   }
 
